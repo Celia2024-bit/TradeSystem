@@ -1,0 +1,40 @@
+#ifndef MARKETDATA_H
+#define MARKETDATA_H
+
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <vector>
+#include <thread>
+#include <iostream>
+#include <chrono>
+#include <random>
+#include <iomanip>
+#include "types.h"
+#include "SafeQueue.h"
+
+class MarketData
+{
+private:
+    std::mutex& priceMutex_;             
+    std::atomic<bool> isDataTracing_;   
+    SafeQueue<TradeData>& dataQueue_;
+    std::condition_variable& dataCV_;
+    std::default_random_engine gen_;
+
+public:
+    MarketData() = delete;
+
+    MarketData(SafeQueue<TradeData>& dataQueue,
+               std::condition_variable& dataCV,
+               std::mutex& priceMutex);
+
+    void StartTraceData();
+
+    void StopTraceData();
+
+    void TraceData();
+};
+
+#endif // MARKETDATA_H
