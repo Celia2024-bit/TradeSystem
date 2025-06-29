@@ -5,26 +5,13 @@ Portfolio::Portfolio(double cash,
                      std::condition_variable& actionCV,
                      std::mutex& actionMutex,
                      std::mutex& portfolioMutex,
-					 std::atmoic<bool>  &systemRunningFlag)
+					 std::atomic<bool>  &systemRunningFlag)
     : initialCash_(cash), currentCash_(cash),
       actionQueue_(actionQueue), actionCV_(actionCV),
       actionMutex_(actionMutex), portfolioMutex_(portfolioMutex),
-	  isRunning_(false),systemRunningFlag_(systemRunningFlag)
+	  systemRunningFlag_(systemRunningFlag)
 {
 
-}
-
-void Portfolio::StartExecution()
-{
-    isRunning_ = true;
-    std::cout << "[Execution] Execution thread signaled to start." << std::endl;
-}
-
-// Implement StopExecution
-void Portfolio::StopExecution()
-{
-    isRunning_ = false;
-    std::cout << "[Execution] Execution thread signaled to stop." << std::endl;
 }
 
 bool Portfolio::Buy(double price, double amount)
@@ -115,12 +102,12 @@ double Portfolio::GetProfit(double currentPrice) const
 
 void Portfolio::TradeExecutionLoop()
 {
-    while (systemRunningFlag_)
+    while (systemRunningFlag_.load(std::memory_order_acquire))
     {
         ActionSignal action_signal;
 
         {
-            std::unique_lock<std::mutex> lock(actionMutex_); /
+            std::unique_lock<std::mutex> lock(actionMutex_); 
             if (!actionCV_.wait_for(lock, std::chrono::seconds(2),
                                     [this] { return !actionQueue_.empty(); }))
             {

@@ -28,7 +28,7 @@ int main()
     // Portfolio state mutex (to protect cash, BTC amount, etc.)
     std::mutex portfolioMutex;
 	
-	std::atmoic<bool>  systemRunningFlag;
+	std::atomic<bool>  systemRunningFlag;
 
     std::shared_ptr<MarketData> marketData =
         std::make_shared<MarketData>(priceQueue, priceCV, priceMutex, systemRunningFlag);
@@ -50,29 +50,28 @@ int main()
     std::cout << "Main: All threads started. Running for 30 seconds..." << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(30));
 
+    systemRunningFlag.store(true, std::memory_order_release);
     // Join Threads
     market_thread.join();
     strategy_thread_obj.join();
     execution_thread_obj.join();
 
+     // TODO when to set false 
     return 0;
 }
 
 
 void market_data_thread_func(std::shared_ptr<MarketData> marketData)
 {
-    marketData->StartTraceData();
     marketData->TraceData();
 }
 
 void strategy_thread_func(std::shared_ptr<DataReceive> dataReceive)
 {
-    dataReceive->StartReceiveData();
     dataReceive->ProcessDataAndGenerateSignals();
 }
 
 void execution_thread_func(std::shared_ptr<Portfolio> portfolio)
 {
-	portfolio->StartExecution();
     portfolio->TradeExecutionLoop();
 }

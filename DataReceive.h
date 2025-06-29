@@ -25,12 +25,12 @@ private:
     std::mutex& actionMutex_;                 
     doubleVect recentPrices_;         
     TradeAlgorithm tradeAl_; 
-	std::atmoic<bool>  &systemRunningFlag_;
+	std::atomic<bool>  &systemRunningFlag_;
 public:
     DataReceive() = delete;
     DataReceive(SafeQueue<TradeData>& dataQueue, SafeQueue<ActionSignal>& actionQueue,
                 std::condition_variable& dataCV, std::mutex& priceMutex,
-                std::condition_variable& actionCV, std::mutex& actionMutex, std::atmoic<bool>  &systemRunningFlag);
+                std::condition_variable& actionCV, std::mutex& actionMutex, std::atomic<bool>  &systemRunningFlag);
 
     void ProcessDataAndGenerateSignals();
 };

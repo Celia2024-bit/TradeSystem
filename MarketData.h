@@ -20,7 +20,7 @@ private:
     std::mutex& priceMutex_;              
     SafeQueue<TradeData>& dataQueue_;
     std::condition_variable& dataCV_;
-	std::atmoic<bool>  &systemRunningFlag_;
+	std::atomic<bool>  &systemRunningFlag_;
     std::default_random_engine gen_;
 
 public:
@@ -28,7 +28,7 @@ public:
 
     MarketData(SafeQueue<TradeData>& dataQueue,
                std::condition_variable& dataCV,
-               std::mutex& priceMutex, std::atmoic<bool>  &systemRunningFlag);
+               std::mutex& priceMutex, std::atomic<bool>  &systemRunningFlag);
 
     void TraceData();
 };

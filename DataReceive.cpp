@@ -1,18 +1,26 @@
 #include "DataReceive.h"
+#include <iomanip>
 
 DataReceive::DataReceive(SafeQueue<TradeData>& dataQueue, SafeQueue<ActionSignal>& actionQueue,
                          std::condition_variable& dataCV, std::mutex& priceMutex,
-                         std::condition_variable& actionCV, std::mutex& actionMutex, 
-						 std::atmoic<bool>  &systemRunningFlag)
-    : dataQueue_(dataQueue), actionQueue_(actionQueue), dataCV_(dataCV), priceMutex_(priceMutex),
-      actionCV_(actionCV), actionMutex_(actionMutex), isReceivingData_(false), systemRunningFlag_(systemRunningFlag)
+                         std::condition_variable& actionCV, std::mutex& actionMutex,
+						 std::atomic<bool>  &systemRunningFlag)
+    : dataQueue_(dataQueue),
+      actionQueue_(actionQueue),
+      dataCV_(dataCV),
+      actionCV_(actionCV),
+      priceMutex_(priceMutex),
+      actionMutex_(actionMutex),
+      recentPrices_(),
+      tradeAl_(), 
+      systemRunningFlag_(systemRunningFlag)
 {
 
 }
 
 void DataReceive::ProcessDataAndGenerateSignals()
 {
-    while (systemRunningFlag_)
+    while (systemRunningFlag_.load(std::memory_order_acquire))
     {
         TradeData market_data; 
 
@@ -57,6 +65,7 @@ void DataReceive::ProcessDataAndGenerateSignals()
 						  << (action == ActionType::BUY ? "BUY" : "SELL")
 						  << " at price $" << std::fixed << std::setprecision(2)
 						  << market_data.price_ << std::endl;
+			}
         }
         else
         {

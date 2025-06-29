@@ -2,9 +2,12 @@
 MarketData::MarketData(SafeQueue<TradeData>& dataQueue,
                        std::condition_variable& dataCV,
                        std::mutex& priceMutex,
-					   std::atmoic<bool>  &systemRunningFlag)
-    : dataQueue_(dataQueue), dataCV_(dataCV), priceMutex_(priceMutex),
-      isDataTracing_(false), gen_(std::random_device{}()),  systemRunningFlag_(systemRunningFlag)// Initialize random engine
+					   std::atomic<bool>  &systemRunningFlag)
+    : priceMutex_(priceMutex),
+      dataQueue_(dataQueue),
+      dataCV_(dataCV),
+      systemRunningFlag_(systemRunningFlag),
+      gen_(std::random_device{}())
 {
 }
 
@@ -13,7 +16,7 @@ void MarketData::TraceData()
     std::uniform_real_distribution<> price_change(-2000.0, 2000.0); 
     double base_price = 50000.0;
 
-    while (systemRunningFlag_)
+    while (systemRunningFlag_.load(std::memory_order_acquire))
     {
 
         double change = price_change(gen_);

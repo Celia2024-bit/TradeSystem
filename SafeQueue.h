@@ -50,7 +50,7 @@ template <typename T>
 size_t SafeQueue<T>::size() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    return queue_.size();e
+    return queue_.size();
 }
 
 template <typename T>

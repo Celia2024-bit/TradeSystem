@@ -28,7 +28,7 @@ private:
     std::condition_variable& actionCV_;
     std::mutex& actionMutex_;
     std::mutex& portfolioMutex_;
-	std::atmoic<bool>  &systemRunningFlag;
+	std::atomic<bool>& systemRunningFlag_;
 
     bool Buy(double price, double amount);
     bool Sell(double price, double amount);
@@ -43,7 +43,7 @@ public:
               std::condition_variable& actionCV,
               std::mutex& actionMutex,
               std::mutex& portfolioMutex, 
-			  std::atmoic<bool>  &systemRunningFlag);
+			  std::atomic<bool>  &systemRunningFlag);
 
     void TradeExecutionLoop();
 
