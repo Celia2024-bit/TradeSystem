@@ -25,6 +25,8 @@ private:
     std::mutex& systemBrokenMutex_;
     std::condition_variable& systemBrokenCV_;
     std::default_random_engine gen_;
+	// Attention: just for test 
+    int dataCount_ = 0;
 
 public:
     MarketDataGenerator() = delete;
