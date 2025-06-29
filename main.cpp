@@ -3,48 +3,48 @@
 #include <memory>
 
 #include "SafeQueue.h"
-#include "MarketData.h"
-#include "DataReceive.h"
-#include "portfolio.h"
+#include "MarketDataGenerator.h"
+#include "StrategyEngine.h"
+#include "TradeExecutor.h"
 #include "types.h"
 
 // Forward declarations of thread functions (to be passed shared_ptrs)
-void market_data_thread_func(std::shared_ptr<MarketData> marketData);
-void strategy_thread_func(std::shared_ptr<DataReceive> dataReceive);
-void execution_thread_func(std::shared_ptr<Portfolio> portfolio);
+void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator);
+void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
+void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 
 int main()
 {
     // Price data queue and its synchronization primitives
-    SafeQueue<TradeData> priceQueue;
-    std::mutex priceMutex;
-    std::condition_variable priceCV;
+    SafeQueue<TradeData> marketDataQueue;
+    std::mutex marketDataMutex;
+    std::condition_variable marketDataCV;
 
     // Trading signal queue and its synchronization primitives
-    SafeQueue<ActionSignal> actionQueue;
-    std::mutex actionMutex;
-    std::condition_variable actionCV;
+    SafeQueue<ActionSignal> actionSignalQueue;
+    std::mutex actionSignalMutex;
+    std::condition_variable actionSignalCV;
 
     // Portfolio state mutex (to protect cash, BTC amount, etc.)
-    std::mutex portfolioMutex;
+    std::mutex tradeExecutorMutex;
 	
 	std::atomic<bool>  systemRunningFlag;
 
-    std::shared_ptr<MarketData> marketData =
-        std::make_shared<MarketData>(priceQueue, priceCV, priceMutex, systemRunningFlag);
+    std::shared_ptr<MarketDataGenerator> marketDataGenerator =
+        std::make_shared<MarketDataGenerator>(marketDataQueue, marketDataCV, marketDataMutex, systemRunningFlag);
 
-    std::shared_ptr<DataReceive> dataReceive =
-        std::make_shared<DataReceive>(priceQueue, actionQueue, priceCV,
-                                      priceMutex, actionCV, actionMutex, systemRunningFlag);
+    std::shared_ptr<StrategyEngine> strategyEngine =
+        std::make_shared<StrategyEngine>(marketDataQueue, actionSignalQueue, marketDataCV,
+                                      marketDataMutex, actionSignalCV, actionSignalMutex, systemRunningFlag);
 
-    std::shared_ptr<Portfolio> portfolio =
-        std::make_shared<Portfolio>(DEFAULT_CASH, actionQueue, actionCV,
-                                    actionMutex, portfolioMutex, systemRunningFlag);
+    std::shared_ptr<TradeExecutor> tradeExecutor =
+        std::make_shared<TradeExecutor>(DEFAULT_CASH, actionSignalQueue, actionSignalCV,
+                                    actionSignalMutex, tradeExecutorMutex, systemRunningFlag);
 
     // Start market data thread, strategy thread, execution thread
-    std::thread market_thread(market_data_thread_func, marketData);
-    std::thread strategy_thread_obj(strategy_thread_func, dataReceive);
-    std::thread execution_thread_obj(execution_thread_func, portfolio);
+    std::thread market_data_generator_thread(market_data_generator_thread_func, marketDataGenerator);
+    std::thread strategy_engine_thread(strategy_engine_thread_func, strategyEngine);
+    std::thread trade_execution_thread(trade_execution_thread_func, tradeExecutor);
 
     // Give threads some time to run and generate activity
     std::cout << "Main: All threads started. Running for 30 seconds..." << std::endl;
@@ -52,26 +52,26 @@ int main()
 
     systemRunningFlag.store(true, std::memory_order_release);
     // Join Threads
-    market_thread.join();
-    strategy_thread_obj.join();
-    execution_thread_obj.join();
+    market_data_generator_thread.join();
+    strategy_engine_thread.join();
+    trade_execution_thread.join();
 
      // TODO when to set false 
     return 0;
 }
 
 
-void market_data_thread_func(std::shared_ptr<MarketData> marketData)
+void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator)
 {
-    marketData->TraceData();
+    marketDataGenerator->GenerateMarketData();
 }
 
-void strategy_thread_func(std::shared_ptr<DataReceive> dataReceive)
+void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine)
 {
-    dataReceive->ProcessDataAndGenerateSignals();
+    strategyEngine->ProcessMarketDataAndGenerateSignals();
 }
 
-void execution_thread_func(std::shared_ptr<Portfolio> portfolio)
+void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor)
 {
-    portfolio->TradeExecutionLoop();
+    tradeExecutor->RunTradeExecutionLoop();
 }
