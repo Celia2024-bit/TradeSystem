@@ -24,7 +24,7 @@ void MarketDataGenerator::GenerateMarketData()
 
     while (systemRunningFlag_.load(std::memory_order_acquire) &&
 	       !systemBrokenFlag_.load(std::memory_order_acquire) &&
-		   dataCount_ < 50 )
+		   dataCount_ < 100 )
     {
 
         double change = priceFluctuationDistribution(gen_);
@@ -47,7 +47,7 @@ void MarketDataGenerator::GenerateMarketData()
 		// Attention : Just for test 
 		dataCount_++;
 		// Simulate a critical error after 20 data points for demonstration
-        if (dataCount_ == 20) { //
+        if (dataCount_ == 90) { //
             std::cout << "[Market Data] Simulating critical error after 20 data points." << std::endl; //
             std::lock_guard<std::mutex> lock(systemBrokenMutex_); //
             systemBrokenFlag_.store(true, std::memory_order_release); //
