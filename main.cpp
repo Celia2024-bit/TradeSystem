@@ -29,8 +29,6 @@ int main()
     std::mutex actionSignalMutex;
     std::condition_variable actionSignalCV;
 
-    std::mutex tradeExecutorMutex; // For protecting TradeExecutor's internal state
-
     // --- 2. Global System Control Flags and Synchronization for Shutdown ---
     std::atomic<bool> systemRunningFlag(true); // Flag to signal threads to run or stop
     std::atomic<bool> systemBrokenFlag(false); // Flag to signal critical error
@@ -49,7 +47,7 @@ int main()
 
     std::shared_ptr<TradeExecutor> tradeExecutor =
         std::make_shared<TradeExecutor>(DEFAULT_CASH, actionSignalQueue, actionSignalCV,
-                                        actionSignalMutex, tradeExecutorMutex,
+                                        actionSignalMutex,
                                         systemRunningFlag, systemBrokenFlag, systemBrokenMutex, systemBrokenCV); // Added broken system flags
 
     // --- 4. Thread Creation: Launching worker threads ---

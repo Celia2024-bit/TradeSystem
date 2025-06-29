@@ -4,14 +4,13 @@ TradeExecutor::TradeExecutor(double cash,
                      SafeQueue<ActionSignal>& actionSignalQueue,
                      std::condition_variable& actionSignalCV,
                      std::mutex& actionSignalMutex,
-                     std::mutex& tradeExecutorMutex,
                      std::atomic<bool>  &systemRunningFlag,
                      std::atomic<bool>& systemBrokenFlag,
                      std::mutex& systemBrokenMutex,
                      std::condition_variable& systemBrokenCV)
     : initialFiatBalance_(cash), currentFiatBalance_(cash),
       actionSignalQueue_(actionSignalQueue), actionSignalCV_(actionSignalCV),
-      actionSignalMutex_(actionSignalMutex), tradeExecutorMutex_(tradeExecutorMutex),
+      actionSignalMutex_(actionSignalMutex),
       systemRunningFlag_(systemRunningFlag), systemBrokenFlag_(systemBrokenFlag),
       systemBrokenMutex_(systemBrokenMutex), systemBrokenCV_(systemBrokenCV)
 {

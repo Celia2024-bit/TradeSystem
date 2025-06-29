@@ -25,11 +25,11 @@ private:
     uint32_t totalTrades_ = 0;
     uint32_t totalBuyAction_ = 0; 
     uint32_t totalSellAction_ = 0;
+    std::mutex tradeExecutorMutex_;
 
     SafeQueue<ActionSignal>& actionSignalQueue_;
     std::condition_variable& actionSignalCV_;
     std::mutex& actionSignalMutex_;
-    std::mutex& tradeExecutorMutex_;
     std::atomic<bool>& systemRunningFlag_;
     std::atomic<bool>& systemBrokenFlag_;
     std::mutex& systemBrokenMutex_;
@@ -48,7 +48,6 @@ public:
               SafeQueue<ActionSignal>& actionSignalQueue,
               std::condition_variable& actionSignalCV,
               std::mutex& actionSignalMutex,
-              std::mutex& tradeExecutorMutex, 
               std::atomic<bool>  &systemRunningFlag,
               std::atomic<bool>& systemBrokenFlag,
               std::mutex& systemBrokenMutex,  
