@@ -14,10 +14,10 @@ TARGET = trading_system
 
 # List of all source files (.cpp)
 SRCS = main.cpp \
-       MarketData.cpp \
-       DataReceive.cpp \
-       portfolio.cpp \
-       TradeAlgorithm.cpp
+       MarketDataGenerator.cpp \
+       TradeExecutor.cpp \
+       StrategyEngine.cpp \
+       TradingStrategy.cpp
 
 # Generate a list of object files (.o) from the source files
 OBJS = $(SRCS:.cpp=.o)
