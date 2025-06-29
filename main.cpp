@@ -6,7 +6,7 @@
 #include "MarketDataGenerator.h"
 #include "StrategyEngine.h"
 #include "TradeExecutor.h"
-#include "types.h"
+#include "Types.h"
 
 // Forward declarations of thread functions (to be passed shared_ptrs)
 void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator);

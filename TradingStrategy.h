@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <numeric>
-#include "types.h" 
+#include "Types.h" 
 
 class TradingStrategy
 {

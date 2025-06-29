@@ -10,7 +10,7 @@
 #include <iostream>
 #include <chrono>
 #include <random>
-#include "types.h"
+#include "Types.h"
 #include "SafeQueue.h"
 #include "TradingStrategy.h"
 

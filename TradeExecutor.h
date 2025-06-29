@@ -11,7 +11,7 @@
 #include <chrono>
 #include <iomanip>
 
-#include "types.h"
+#include "Types.h"
 #include "SafeQueue.h" 
 
 constexpr double DEFAULT_CASH = 10000.0; 

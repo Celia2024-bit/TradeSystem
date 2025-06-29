@@ -11,7 +11,7 @@
 #include <chrono>
 #include <random>
 #include <iomanip>
-#include "types.h"
+#include "Types.h"
 #include "SafeQueue.h"
 
 class MarketDataGenerator
