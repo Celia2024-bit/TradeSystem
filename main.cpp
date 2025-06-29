@@ -1,66 +1,95 @@
 #include <iostream>
 #include <thread>
 #include <memory>
+#include <atomic>              // For std::atomic (e.g., systemRunningFlag, systemBrokenFlag)
+#include <chrono>              // For std::chrono (e.g., sleep_for, seconds)
+#include <mutex>               // For std::mutex (for protecting shared data)
+#include <condition_variable>  // For std::condition_variable (for thread synchronization)
 
+// Include necessary custom headers for the trading system components
 #include "SafeQueue.h"
-#include "MarketDataGenerator.h"
-#include "StrategyEngine.h"
+#include "MarketDataGenerator.h" // Renamed from MarketData.h
+#include "StrategyEngine.h"      // Renamed from DataReceive.h
 #include "TradeExecutor.h"
-#include "Types.h"
+#include "Types.h"               // Common data types and enums
 
-// Forward declarations of thread functions (to be passed shared_ptrs)
+// Forward declarations of thread functions.
 void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator);
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
 void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 
 int main()
 {
-    // Price data queue and its synchronization primitives
+    // --- 1. Shared Resources: Queues and their synchronization primitives ---
     SafeQueue<TradeData> marketDataQueue;
     std::mutex marketDataMutex;
     std::condition_variable marketDataCV;
 
-    // Trading signal queue and its synchronization primitives
     SafeQueue<ActionSignal> actionSignalQueue;
     std::mutex actionSignalMutex;
     std::condition_variable actionSignalCV;
 
-    // Portfolio state mutex (to protect cash, BTC amount, etc.)
-    std::mutex tradeExecutorMutex;
-	
-	std::atomic<bool>  systemRunningFlag;
+    std::mutex tradeExecutorMutex; // For protecting TradeExecutor's internal state
 
+    // --- 2. Global System Control Flags and Synchronization for Shutdown ---
+    std::atomic<bool> systemRunningFlag(true); // Flag to signal threads to run or stop
+    std::atomic<bool> systemBrokenFlag(false); // Flag to signal critical error
+    std::mutex systemBrokenMutex;
+    std::condition_variable systemBrokenCV;
+
+    // --- 3. Component Initialization: Creating shared_ptr instances ---
     std::shared_ptr<MarketDataGenerator> marketDataGenerator =
-        std::make_shared<MarketDataGenerator>(marketDataQueue, marketDataCV, marketDataMutex, systemRunningFlag);
+        std::make_shared<MarketDataGenerator>(marketDataQueue, marketDataCV, marketDataMutex,
+                                              systemRunningFlag, systemBrokenFlag, systemBrokenMutex, systemBrokenCV);
 
     std::shared_ptr<StrategyEngine> strategyEngine =
         std::make_shared<StrategyEngine>(marketDataQueue, actionSignalQueue, marketDataCV,
-                                      marketDataMutex, actionSignalCV, actionSignalMutex, systemRunningFlag);
+                                         marketDataMutex, actionSignalCV, actionSignalMutex,
+                                         systemRunningFlag, systemBrokenFlag, systemBrokenMutex, systemBrokenCV); // Added broken system flags
 
     std::shared_ptr<TradeExecutor> tradeExecutor =
         std::make_shared<TradeExecutor>(DEFAULT_CASH, actionSignalQueue, actionSignalCV,
-                                    actionSignalMutex, tradeExecutorMutex, systemRunningFlag);
+                                        actionSignalMutex, tradeExecutorMutex,
+                                        systemRunningFlag, systemBrokenFlag, systemBrokenMutex, systemBrokenCV); // Added broken system flags
 
-    // Start market data thread, strategy thread, execution thread
+    // --- 4. Thread Creation: Launching worker threads ---
     std::thread market_data_generator_thread(market_data_generator_thread_func, marketDataGenerator);
     std::thread strategy_engine_thread(strategy_engine_thread_func, strategyEngine);
     std::thread trade_execution_thread(trade_execution_thread_func, tradeExecutor);
 
-    // Give threads some time to run and generate activity
-    std::cout << "Main: All threads started. Running for 30 seconds..." << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(30));
+    std::cout << "Main: All threads started. Running for 30 seconds or until a critical error..." << std::endl;
 
-    systemRunningFlag.store(true, std::memory_order_release);
-    // Join Threads
+    // --- 5. Main Thread's Waiting Loop for System Shutdown Trigger ---
+    {
+        std::unique_lock<std::mutex> lock(systemBrokenMutex);
+        systemBrokenCV.wait_for(lock, std::chrono::seconds(30), [&]{
+            return systemBrokenFlag.load(std::memory_order_acquire);
+        });
+    }
+
+    // --- 6. System Shutdown Sequence ---
+    systemRunningFlag.store(false, std::memory_order_release);
+    marketDataCV.notify_all();
+    actionSignalCV.notify_all();
+
+    std::cout << "Main: Signaling threads to shut down..." << std::endl;
+
+    // --- 7. Joining Threads: Waiting for all worker threads to complete ---
     market_data_generator_thread.join();
     strategy_engine_thread.join();
     trade_execution_thread.join();
 
-     // TODO when to set false 
+    // --- 8. Final Status Report and Program Exit ---
+    if (systemBrokenFlag.load(std::memory_order_acquire)) {
+        std::cout << "\n--- Main: System stopped due to a critical error in one of the components! ---\n" << std::endl;
+    } else {
+        std::cout << "\n--- Main: System stopped gracefully after running for the specified duration. ---\n" << std::endl;
+    }
+
     return 0;
 }
 
-
+// --- Wrapper Functions for Threads ---
 void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator)
 {
     marketDataGenerator->GenerateMarketData();

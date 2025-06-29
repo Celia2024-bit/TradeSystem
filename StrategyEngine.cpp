@@ -4,7 +4,8 @@
 StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,
                          std::condition_variable& marketDataCV, std::mutex& marketDataMutex,
                          std::condition_variable& actionSignalCV, std::mutex& actionSignalMutex,
-						 std::atomic<bool>  &systemRunningFlag)
+						 std::atomic<bool>  &systemRunningFlag,  std::atomic<bool>& systemBrokenFlag,
+                         std::mutex& systemBrokenMutex,  std::condition_variable& systemBrokenCV)
     : marketDataQueue_(marketDataQueue),
       actionSignalQueue_(actionSignalQueue),
       marketDataCV_(marketDataCV),
@@ -13,14 +14,18 @@ StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<
       actionSignalMutex_(actionSignalMutex),
       priceHistory_(),
       tradingStrategy_(), 
-      systemRunningFlag_(systemRunningFlag)
+      systemRunningFlag_(systemRunningFlag),
+	  systemBrokenFlag_(systemBrokenFlag),
+      systemBrokenMutex_(systemBrokenMutex),
+      systemBrokenCV_(systemBrokenCV) 
 {
 
 }
 
 void StrategyEngine::ProcessMarketDataAndGenerateSignals()
 {
-    while (systemRunningFlag_.load(std::memory_order_acquire))
+    while (systemRunningFlag_.load(std::memory_order_acquire) &&
+	       !systemBrokenFlag_.load(std::memory_order_acquire))
     {
         TradeData currentMarketData; 
 

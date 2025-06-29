@@ -29,6 +29,9 @@ private:
     std::mutex& actionSignalMutex_;
     std::mutex& tradeExecutorMutex_;
 	std::atomic<bool>& systemRunningFlag_;
+    std::atomic<bool>& systemBrokenFlag_;
+    std::mutex& systemBrokenMutex_;
+    std::condition_variable& systemBrokenCV_;
 
     bool ExecuteBuyOrder(double price, double amount);
     bool ExecuteSellOrder(double price, double amount);
@@ -43,7 +46,10 @@ public:
               std::condition_variable& actionSignalCV,
               std::mutex& actionSignalMutex,
               std::mutex& tradeExecutorMutex, 
-			  std::atomic<bool>  &systemRunningFlag);
+			  std::atomic<bool>  &systemRunningFlag,
+			  std::atomic<bool>& systemBrokenFlag,
+              std::mutex& systemBrokenMutex,  
+			  std::condition_variable& systemBrokenCV);
 
     void RunTradeExecutionLoop();
 
