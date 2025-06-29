@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading System Documentation</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+        }
+        h1 { font-size: 2.5em; text-align: center; }
+        h2 { font-size: 2em; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        h3 { font-size: 1.6em; }
+        h4 { font-size: 1.2em; }
+        p {
+            margin-bottom: 1em;
+        }
+        ul {
+            list-style-type: disc;
+            margin-left: 25px;
+            margin-bottom: 1em;
+        }
+        ul li {
+            margin-bottom: 0.5em;
+        }
+        strong {
+            font-weight: bold;
+        }
+        code {
+            background-color: #e9e9e9;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5em;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+        /* Style for Mermaid code blocks - they will display as pre-formatted text by default, but Mermaid JS will render them */
+        pre.mermaid {
+            background-color: #f0f8ff; /* Light background for diagrams */
+            color: #000;
+            border: 1px dashed #ccc;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crypto Trading System</h1>
+
+        <p>This repository contains a multi-threaded C++ application designed to simulate a simplified automated cryptocurrency trading system. It demonstrates concurrent programming concepts, inter-thread communication, and a basic trading strategy.</p>
+
+        <h2>1. System Sequence Flow</h2>
+
+        <p>The core of the system operates as a pipeline, where market data flows through a strategy engine to an execution component. The process involves generating market data, analyzing it for trading signals, and then executing trades.</p>
+
+        <p>Here's a visual representation of the system's data and control flow using a Mermaid diagram:</p>
+
+          <pre class="mermaid">
+        graph TD
+            %% External Data Source
+            API[Crypto Exchange API<br/>Real-time Price Feed]
+            
+            %% Thread 1: Market Data
+            subgraph T1[Thread 1: Market Data]
+                MD[Market Data Thread]
+                PRICE_DATA[Real-time Price Data<br/>BTC: $50000<br/>ETH: $3000]
+                PQ[Price Queue<br/>+ Mutex + CV]
+            end
+            
+            %% Thread 2: Strategy Engine
+            subgraph T2[Thread 2: Strategy Engine]
+                ST[Strategy Thread]
+                ALGO[Action Algorithm]
+                SIGNAL[Action Signal<br/>BUY/SELL Decision]
+                SQ[Signal Queue<br/>+ Mutex + CV]
+            end
+            
+            %% Thread 3: Order Execution
+            subgraph T3[Thread 3: Order Execution]
+                EX[Execution Thread]
+                ORDER[Order Operations<br/>Buy <br/>Sell ]
+            end
+            
+            %% Connections
+            API --> MD
+            MD --> PRICE_DATA
+            PRICE_DATA --> PQ
+            ST --> ALGO
+            ALGO --> SIGNAL
+            SIGNAL --> SQ
+            EX --> ORDER
+            
+            %% Notification flows
+            PQ -.->|notify_one| ST
+            SQ -.->|notify_one| EX
+            
+            %% Styling
+            classDef threadBox fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+            classDef dataBox fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+            classDef actionBox fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+            
+            class MD,ST,EX threadBox
+            class PQ,SQ,PRICE_DATA,SIGNAL dataBox
+            class ALGO,ORDER,API actionBox
+          </pre>
+
+        <h2>2. Threads</h2>
+
+        <p>The system is designed with a clear separation of concerns, managed by three primary worker threads, orchestrated by the <code>main</code> thread:</p>
+        <ul>
+            <li><strong>Market Data Generator Thread (controlled by <code>MarketDataGenerator</code> class):</strong>
+                <ul>
+                    <li><strong>Purpose:</strong> Simulates receiving real-time market price data (e.g., from a cryptocurrency exchange API). It generates price updates at regular intervals.</li>
+                    <li><strong>Flow:</strong> Pushes <code>TradeData</code> (containing price and timestamp) into the <code>marketDataQueue</code>. Notifies the <code>StrategyEngine</code> of new data.</li>
+                </ul>
+            </li>
+            <li><strong>Strategy Engine Thread (controlled by <code>StrategyEngine</code> class):</strong>
+                <ul>
+                    <li><strong>Purpose:</strong> Consumes market data, applies a trading algorithm, and generates action signals (BUY, SELL, HOLD).</li>
+                    <li><strong>Flow:</strong> Pops <code>TradeData</code> from <code>marketDataQueue</code>. Based on its <code>TradingStrategy</code>, it generates <code>ActionSignal</code>s and pushes them into the <code>actionSignalQueue</code>. Notifies the <code>TradeExecutor</code> of new signals.</li>
+                </ul>
+            </li>
+            <li><strong>Trade Executor Thread (controlled by <code>TradeExecutor</code> class):</strong>
+                <ul>
+                    <li><strong>Purpose:</strong> Receives trading signals and simulates the execution of buy/sell orders, managing the portfolio's cash and crypto assets.</li>
+                    <li><strong>Flow:</strong> Pops <code>ActionSignal</code>s from <code>actionSignalQueue</code>. Executes simulated buy/sell operations, updates portfolio balances, and logs trade details.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>3. Classes Overview</h2>
+
+        <p>The system is composed of the following C++ classes:</p>
+        <ul>
+            <li><strong><code>MarketDataGenerator</code> (formerly <code>MarketData</code>):</strong>
+                <ul>
+                    <li>Responsible for simulating the external market data feed.</li>
+                    <li>Generates <code>TradeData</code> objects (price, timestamp) and places them into a thread-safe queue.</li>
+                </ul>
+            </li>
+            <li><strong><code>StrategyEngine</code> (formerly <code>DataReceive</code>):</strong>
+                <ul>
+                    <li>Acts as the brain of the trading system.</li>
+                    <li>Retrieves <code>TradeData</code> from the market data queue.</li>
+                    <li>Uses an instance of <code>TradingStrategy</code> to decide on an action.</li>
+                    <li>Enqueues <code>ActionSignal</code> objects into the action signal queue.</li>
+                </ul>
+            </li>
+            <li><strong><code>TradingStrategy</code> (formerly <code>TradeAlgorithm</code>):</strong>
+                <ul>
+                    <li>Encapsulates various trading algorithms.</li>
+                    <li>Currently implements a <code>SimpleMVStrategy</code> (Simple Moving Average Strategy) to generate signals based on short-term and long-term price averages.</li>
+                    <li>Designed to be extensible for other algorithms (RSI, MACD, Bollinger Bands, etc.).</li>
+                </ul>
+            </li>
+            <li><strong><code>TradeExecutor</code> (formerly <code>Portfolio</code>):</strong>
+                <ul>
+                    <li>Manages the simulated trading account.</li>
+                    <li>Processes <code>ActionSignal</code>s received from the <code>StrategyEngine</code>.</li>
+                    <li>Executes simulated buy and sell orders, updating <code>currentFiatBalance_</code> and <code>cryptoAssetAmount_</code>.</li>
+                    <li>Provides methods to calculate and display the current portfolio status, including total value and profit/loss.</li>
+                </ul>
+            </li>
+            <li><strong><code>SafeQueue&lt;T&gt;</code>:</strong>
+                <ul>
+                    <li>A generic, thread-safe queue template class.</li>
+                    <li>Uses <code>std::queue</code>, <code>std::mutex</code>, and <code>std::condition_variable</code> to ensure safe concurrent access for <code>push</code> (enqueue) and <code>pop</code> (dequeue) operations from multiple threads.</li>
+                    <li>Crucial for reliable inter-thread communication.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>4. Synchronization Primitives</h2>
+
+        <p>Multi-threading requires careful synchronization to prevent race conditions and ensure data consistency. The system utilizes the following C++ standard library primitives to facilitate safe inter-thread communication and coordinated shutdown:</p>
+        <ul>
+            <li><strong><code>SafeQueue&lt;TradeData&gt; marketDataQueue</code>, <code>std::mutex marketDataMutex</code>, <code>std::condition_variable marketDataCV</code>:</strong>
+                <ul>
+                    <li><strong>Components Involved:</strong> <code>MarketDataGenerator</code> (producer) and <code>StrategyEngine</code> (consumer).</li>
+                    <li><strong>Purpose:</strong> These three components work together to manage the flow of market price data.
+                        <ul>
+                            <li><code>marketDataQueue</code> is the actual queue holding <code>TradeData</code>.</li>
+                            <li><code>marketDataMutex</code> protects <code>marketDataQueue</code> from simultaneous access, ensuring only one thread can modify it at a time.</li>
+                            <li><code>marketDataCV</code> is used by the <code>MarketDataGenerator</code> to <code>notify_one()</code> the <code>StrategyEngine</code> when new <code>TradeData</code> is available, and by the <code>StrategyEngine</code> to <code>wait_for</code> new data when the queue is empty, preventing busy-waiting.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><strong><code>SafeQueue&lt;ActionSignal&gt; actionSignalQueue</code>, <code>std::mutex actionSignalMutex</code>, <code>std::condition_variable actionSignalCV</code>:</strong>
+                <ul>
+                    <li><strong>Components Involved:</strong> <code>StrategyEngine</code> (producer) and <code>TradeExecutor</code> (consumer).</li>
+                    <li><strong>Purpose:</strong> Similar to the market data pipeline, these components manage the flow of trade signals.
+                        <ul>
+                            <li><code>actionSignalQueue</code> holds the <code>ActionSignal</code> objects (BUY/SELL/HOLD).</li>
+                            <li><code>actionSignalMutex</code> protects <code>actionSignalQueue</code> to ensure thread-safe enqueue/dequeue operations.</li>
+                            <li><code>actionSignalCV</code> is used by the <code>StrategyEngine</code> to <code>notify_one()</code> the <code>TradeExecutor</code> when a new <code>ActionSignal</code> is generated, and by the <code>TradeExecutor</code> to <code>wait_for</code> a signal when the queue is empty.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><strong><code>std::mutex tradeExecutorMutex</code> (internal to <code>TradeExecutor</code>):</strong>
+                <ul>
+                    <li><strong>Components Involved:</strong> Primarily <code>TradeExecutor</code>'s internal methods (e.g., <code>ExecuteBuyOrder</code>, <code>ExecuteSellOrder</code>, <code>HandleActionSignal</code>, <code>DisplayPortfolioStatus</code>, <code>GetCurrentPrice</code>).</li>
+                    <li><strong>Purpose:</strong> This mutex is a member of the <code>TradeExecutor</code> class and specifically protects the internal state variables of the <code>TradeExecutor</code> (such as <code>currentFiatBalance_</code>, <code>cryptoAssetAmount_</code>, and <code>currentPrice_</code>). It ensures that all operations that modify or read these balances are atomic and consistent, preventing race conditions when different methods within the <code>TradeExecutor</code> access its data. While its reference is passed from <code>main</code> during construction, its scope of protection is internal to the <code>TradeExecutor</code> instance.</li>
+                </ul>
+            </li>
+            <li><strong><code>std::atomic&lt;bool&gt; systemRunningFlag</code>:</strong>
+                <ul>
+                    <li><strong>Components Involved:</strong> <code>main</code> thread (sets/reads), <code>MarketDataGenerator</code>, <code>StrategyEngine</code>, <code>TradeExecutor</code> (all read).</li>
+                    <li><strong>Purpose:</strong> This is the primary control flag for the overall system's lifecycle.
+                        <ul>
+                            <li>The <code>main</code> thread sets it to <code>true</code> at the start to indicate the system should run.</li>
+                            <li>When <code>main</code> decides to shut down (either after a duration or due to a critical error), it sets <code>systemRunningFlag</code> to <code>false</code>.</li>
+                            <li>All worker threads (<code>MarketDataGenerator</code>, <code>StrategyEngine</code>, <code>TradeExecutor</code>) constantly check this flag in their main <code>while</code> loops. When they observe it as <code>false</code>, they know to exit their loops gracefully, facilitating a clean shutdown. Its atomic nature ensures immediate visibility of its state change across all threads without explicit mutex locking.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li><strong><code>std::atomic&lt;bool&gt; systemBrokenFlag</code>, <code>std::mutex systemBrokenMutex</code>, <code>std::condition_variable systemBrokenCV</code>:</strong>
+                <ul>
+                    <li><strong>Components Involved:</strong> <code>MarketDataGenerator</code>, <code>StrategyEngine</code>, <code>TradeExecutor</code> (can set `systemBrokenFlag` and notify `systemBrokenCV`), `main` thread (waits on `systemBrokenCV` and reads `systemBrokenFlag`).</li>
+                    <li><strong>Purpose:</strong> This set of primitives is designed for immediate, system-wide error signaling and emergency shutdown.
+                        <ul>
+                            <li><code>systemBrokenFlag</code> is an atomic boolean flag, initialized to `false`, that any worker thread can set to `true` if it encounters a critical, unrecoverable error (e.g., simulated data source failure, strategy logic error).</li>
+                            <li><code>systemBrokenMutex </code> ` protects `systemBrokenFlag` during writes and is used in conjunction with `systemBrokenCV`.</li>
+                            <li><code>systemBrokenCV </code> is the condition variable that the `main` thread waits on. When a worker thread sets `systemBrokenFlag` to `true`, it then calls `systemBrokenCV.notify_one()` (or `notify_all()`) to immediately wake up the `main` thread, overriding any timeout `main` might be waiting for. This ensures the system can react swiftly to critical failures.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>5. How Classes and Threads Work Together (The Pipeline in Detail)</h2>
+
+        <p>This section details the operational flow and interaction between the main thread, worker threads, and the C++ classes through their shared synchronization primitives.</p>
+        <pre class="mermaid">
+graph TD
+    subgraph "Main Thread"
+        MAIN_START(Program Start) --> INIT_COMPONENTS[Initialize Components: MarketDataGenerator, StrategyEngine, TradeExecutor]
+        INIT_COMPONENTS --> SETUP_GLOBAL_FLAGS[Set systemRunningFlag=true, Initialize systemBrokenFlag=false, systemBrokenMutex, systemBrokenCV]
+        SETUP_GLOBAL_FLAGS --> LAUNCH_THREADS[Launch Worker Threads: MD, SE, TE]
+        LAUNCH_THREADS --> MAIN_WAIT[Wait for shutdown signal: systemBrokenCV.wait_for 30s, systemBrokenFlag]
+        MAIN_WAIT --> SHUTDOWN_SEQUENCE[Set systemRunningFlag=false, Notify all CVs: marketDataCV, actionSignalCV]
+        SHUTDOWN_SEQUENCE --> JOIN_THREADS[Join Worker Threads: MD.join, SE.join, TE.join]
+        JOIN_THREADS --> REPORT_STATUS[Display Final Portfolio Status]
+        REPORT_STATUS --> MAIN_END(Program End)
+    end
+    
+    subgraph "Market Data Generator Thread MD"
+        MD_LOOP_START(Loop: while systemRunningFlag and not systemBrokenFlag and count less than 50) --> GENERATE_PRICE[Generate New Price]
+        GENERATE_PRICE --> ENQUEUE_MD[Enqueue TradeData: marketDataQueue.enqueue]
+        ENQUEUE_MD --> NOTIFY_MD_CV[Notify StrategyEngine: marketDataCV.notify_one]
+        NOTIFY_MD_CV --> INCREMENT_COUNT[Increment dataCount]
+        INCREMENT_COUNT --> CHECK_ERROR{Data Point 20?}
+        CHECK_ERROR -->|Yes| SET_BROKEN[Set systemBrokenFlag=true, Notify main thread: systemBrokenCV.notify_one]
+        CHECK_ERROR -->|No| MD_LOOP_START
+        SET_BROKEN --> MD_EXIT_LOOP(Exit Loop)
+        MD_LOOP_START -->|Exit condition met| MD_EXIT_LOOP
+        MD_EXIT_LOOP --> MD_CLEANUP[Perform Cleanup]
+        MD_CLEANUP --> MD_END(Thread End)
+    end
+    
+    subgraph "Strategy Engine Thread SE"
+        SE_LOOP_START(Loop: while systemRunningFlag and not systemBrokenFlag) --> WAIT_FOR_MD[Wait for Market Data: marketDataCV.wait_for 2s, queue empty]
+        WAIT_FOR_MD -->|Data Available/Timeout/Shutdown| DEQUEUE_MD[Dequeue TradeData: marketDataQueue.dequeue]
+        DEQUEUE_MD --> APPLY_STRATEGY[Apply TradingStrategy: SimpleMVStrategy]
+        APPLY_STRATEGY -->|Signal BUY/SELL| ENQUEUE_ACTION[Enqueue ActionSignal: actionSignalQueue.enqueue]
+        ENQUEUE_ACTION --> NOTIFY_ACTION_CV[Notify TradeExecutor: actionSignalCV.notify_one]
+        APPLY_STRATEGY -->|HOLD/No Signal| SE_LOOP_START
+        NOTIFY_ACTION_CV --> SE_LOOP_START
+        SE_LOOP_START -->|System Running Flag=false| SE_EXIT_LOOP(Exit Loop)
+        SE_LOOP_START -->|System Broken Flag=true| SE_EXIT_LOOP
+        SE_EXIT_LOOP --> SE_CLEANUP[Perform Cleanup]
+        SE_CLEANUP --> SE_END(Thread End)
+    end
+    
+    subgraph "Trade Executor Thread TE"
+        TE_LOOP_START(Loop: while systemRunningFlag and not systemBrokenFlag) --> WAIT_FOR_ACTION[Wait for Action Signal: actionSignalCV.wait_for 2s, queue empty]
+        WAIT_FOR_ACTION -->|Signal Available/Timeout/Shutdown| DEQUEUE_ACTION[Dequeue ActionSignal: actionSignalQueue.dequeue]
+        DEQUEUE_ACTION --> UPDATE_PRICE[Update currentPrice_]
+        UPDATE_PRICE --> EXECUTE_TRADE[Execute Buy/Sell Order: HandleActionSignal]
+        EXECUTE_TRADE --> TE_LOOP_START
+        WAIT_FOR_ACTION -- System Running Flag=false --> TE_EXIT_LOOP(Exit Loop)
+        TE_LOOP_START -- System Broken Flag=true --> TE_EXIT_LOOP
+        TE_EXIT_LOOP --> TE_CLEANUP[Perform Cleanup]
+        TE_CLEANUP --> TE_END(Thread End)
+    end
+        </pre>
+        
+        <h2>6. How to Use the Codes</h2>
+
+        <p>This section outlines the steps to compile and run the Crypto Trading System application from the source code. You will need a C++14 compatible compiler (like g++) and <code>make</code> installed on your system.</p>
+
+        <h3>1. Compile the Application</h3>
+        <p>Navigate to the root directory of the project in your terminal where the <code>Makefile</code> is located. Then, run the <code>make all</code> command:</p>
+        <pre><code>make all</code></pre>
+        <p>This command will:</p>
+        <ul>
+            <li>Create an <code>output</code> directory if it doesn't already exist.</li>
+            <li>Compile all <code>.cpp</code> source files into object files (<code>.o</code>) within the <code>output</code> directory.</li>
+            <li>Link all object files to create the final executable named <code>trading_system</code> (or <code>trading_system.exe</code> on Windows) inside the <code>output</code> directory.</li>
+        </ul>
+
+        <h3>2. Run the Application</h3>
+        <p>After successful compilation, you can run the executable from the project's root directory. The executable will be located in the <code>output/</code> subdirectory.</p>
+        <pre><code>./output/trading_system</code></pre>
+        <p>On Windows, you might run it as:</p>
+        <pre><code>.\output\trading_system.exe</code></pre>
+        <p>The application will then start its multi-threaded simulation, and you will see console output detailing market data generation, strategy decisions, and trade executions.</p>
+
+        <h3>3. Clean Up (Optional)</h3>
+        <p>To remove all compiled object files and the executable, you can use the <code>clean</code> command:</p>
+        <pre><code>make clean</code></pre>
+        <p>This will help in starting a fresh build or cleaning up your project directory.</p>
+    </div>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>
