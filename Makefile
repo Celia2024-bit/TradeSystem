@@ -14,7 +14,6 @@ TARGET = trading_system
 
 # List of all source files (.cpp)
 SRCS = main.cpp \
-       SafeQueue.cpp \
        MarketData.cpp \
        DataReceive.cpp \
        portfolio.cpp \
