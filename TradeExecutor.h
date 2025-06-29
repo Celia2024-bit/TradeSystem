@@ -23,18 +23,18 @@ private:
     double currentFiatBalance_;
     double cryptoAssetAmount_ = 0.0;
     uint32_t totalTrades_ = 0;
-	uint32_t totalBuyAction_ = 0; 
-	uint32_t totalSellAction_ = 0;
+    uint32_t totalBuyAction_ = 0; 
+    uint32_t totalSellAction_ = 0;
 
     SafeQueue<ActionSignal>& actionSignalQueue_;
     std::condition_variable& actionSignalCV_;
     std::mutex& actionSignalMutex_;
     std::mutex& tradeExecutorMutex_;
-	std::atomic<bool>& systemRunningFlag_;
+    std::atomic<bool>& systemRunningFlag_;
     std::atomic<bool>& systemBrokenFlag_;
     std::mutex& systemBrokenMutex_;
     std::condition_variable& systemBrokenCV_;
-	double currentPrice_ = 0;
+    double currentPrice_ = 0;
 
     bool ExecuteBuyOrder(double price, double amount);
     bool ExecuteSellOrder(double price, double amount);
@@ -49,10 +49,10 @@ public:
               std::condition_variable& actionSignalCV,
               std::mutex& actionSignalMutex,
               std::mutex& tradeExecutorMutex, 
-			  std::atomic<bool>  &systemRunningFlag,
-			  std::atomic<bool>& systemBrokenFlag,
+              std::atomic<bool>  &systemRunningFlag,
+              std::atomic<bool>& systemBrokenFlag,
               std::mutex& systemBrokenMutex,  
-			  std::condition_variable& systemBrokenCV);
+              std::condition_variable& systemBrokenCV);
 
     void RunTradeExecutionLoop();
 
@@ -61,8 +61,8 @@ public:
     double CalculateProfitLoss(double currentPrice) const;
 
     void DisplayPortfolioStatus(double currentPrice);
-	
-	double GetCurrentPrice(void) const { return currentPrice_; } 
+
+    double GetCurrentPrice(void) const { return currentPrice_; } 
 };
 
 #endif // TRADEEXECUTOR_H

@@ -32,29 +32,29 @@ all: $(OUTPUT_DIR) $(TARGET)
 
 # Rule to create the output directory if it doesn't exist
 $(OUTPUT_DIR):
-	@mkdir -p $(OUTPUT_DIR)
-	@echo "Created output directory: $(OUTPUT_DIR)"
+    @mkdir -p $(OUTPUT_DIR)
+    @echo "Created output directory: $(OUTPUT_DIR)"
 
 # Rule to link the object files into the executable
 $(TARGET): $(OBJS)
-	@echo "Linking $(TARGET)..."
-	$(CXX) $(OBJS) -o $(TARGET) $(CXXFLAGS)
-	@echo "Build successful! Executable: $(TARGET)"
+    @echo "Linking $(TARGET)..."
+    $(CXX) $(OBJS) -o $(TARGET) $(CXXFLAGS)
+    @echo "Build successful! Executable: $(TARGET)"
 
 # Generic rule to compile .cpp files into .o files within the output directory
 # $@: the target name (e.g., output/main.o)
 # $<: the first prerequisite (e.g., main.cpp)
 # -c (or --compile) means "compile and assemble, but do not link."
 $(OUTPUT_DIR)/%.o: %.cpp $(OUTPUT_DIR) # Ensure output directory exists before compiling
-	@echo "Compiling $<..."
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+    @echo "Compiling $<..."
+    $(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Rule to clean up generated files and the output directory
 clean:
-	@echo "Cleaning up..."
-	$(RM) $(OUTPUT_DIR)/*.o $(TARGET)
-	@rmdir $(OUTPUT_DIR) 2>/dev/null || true # Remove directory, suppress error if not empty/exists
-	@echo "Clean complete."
+    @echo "Cleaning up..."
+    $(RM) $(OUTPUT_DIR)/*.o $(TARGET)
+    @rmdir $(OUTPUT_DIR) 2>/dev/null || true # Remove directory, suppress error if not empty/exists
+    @echo "Clean complete."
 
 # Phony targets are not actual files, but commands
 .PHONY: all clean

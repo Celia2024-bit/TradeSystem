@@ -85,11 +85,11 @@ int main()
     } else {
         std::cout << "\n--- Main: System stopped gracefully after running for the specified duration. ---\n" << std::endl;
     }
-	
-	// Retrieve the last known price from TradeExecutor
-	// Retrieve the last known price from TradeExecutor
-	double price = tradeExecutor->GetCurrentPrice();
-	tradeExecutor->DisplayPortfolioStatus(price);
+    
+    // Retrieve the last known price from TradeExecutor
+    // Retrieve the last known price from TradeExecutor
+    double price = tradeExecutor->GetCurrentPrice();
+    tradeExecutor->DisplayPortfolioStatus(price);
     
     return 0;
 }

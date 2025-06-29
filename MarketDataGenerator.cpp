@@ -2,15 +2,15 @@
 MarketDataGenerator::MarketDataGenerator(SafeQueue<TradeData>& marketDataQueue,
                        std::condition_variable& marketDataCV,
                        std::mutex& marketDataMutex,
-					   std::atomic<bool>  &systemRunningFlag,
-					   std::atomic<bool>& systemBrokenFlag,
+                       std::atomic<bool>  &systemRunningFlag,
+                       std::atomic<bool>& systemBrokenFlag,
                        std::mutex& systemBrokenMutex,
                        std::condition_variable& systemBrokenCV)
     : marketDataMutex_(marketDataMutex),
       marketDataQueue_(marketDataQueue),
       marketDataCV_(marketDataCV),
       systemRunningFlag_(systemRunningFlag),
-	  systemBrokenFlag_(systemBrokenFlag),
+      systemBrokenFlag_(systemBrokenFlag),
       systemBrokenMutex_(systemBrokenMutex), 
       systemBrokenCV_(systemBrokenCV), 
       gen_(std::random_device{}())
@@ -23,8 +23,8 @@ void MarketDataGenerator::GenerateMarketData()
     double currentPrice = 50000.0;
 
     while (systemRunningFlag_.load(std::memory_order_acquire) &&
-	       !systemBrokenFlag_.load(std::memory_order_acquire) &&
-		   dataCount_ < 100 )
+           !systemBrokenFlag_.load(std::memory_order_acquire) &&
+           dataCount_ < 100 )
     {
 
         double change = priceFluctuationDistribution(gen_);
@@ -44,9 +44,9 @@ void MarketDataGenerator::GenerateMarketData()
         std::cout << "[Market Data] New price: $" << std::fixed << std::setprecision(2)
                   << currentPrice << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(500)); // 0.5 seconds per update
-		// Attention : Just for test 
-		dataCount_++;
-		// Simulate a critical error after 20 data points for demonstration
+        // Attention : Just for test 
+        dataCount_++;
+        // Simulate a critical error after 20 data points for demonstration
         if (dataCount_ == 90) { //
             std::cout << "[Market Data] Simulating critical error after 20 data points." << std::endl; //
             std::lock_guard<std::mutex> lock(systemBrokenMutex_); //

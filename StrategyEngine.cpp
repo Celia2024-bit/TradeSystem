@@ -4,7 +4,7 @@
 StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,
                          std::condition_variable& marketDataCV, std::mutex& marketDataMutex,
                          std::condition_variable& actionSignalCV, std::mutex& actionSignalMutex,
-						 std::atomic<bool>  &systemRunningFlag,  std::atomic<bool>& systemBrokenFlag,
+                         std::atomic<bool>  &systemRunningFlag,  std::atomic<bool>& systemBrokenFlag,
                          std::mutex& systemBrokenMutex,  std::condition_variable& systemBrokenCV)
     : marketDataQueue_(marketDataQueue),
       actionSignalQueue_(actionSignalQueue),
@@ -15,7 +15,7 @@ StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<
       priceHistory_(),
       tradingStrategy_(), 
       systemRunningFlag_(systemRunningFlag),
-	  systemBrokenFlag_(systemBrokenFlag),
+      systemBrokenFlag_(systemBrokenFlag),
       systemBrokenMutex_(systemBrokenMutex),
       systemBrokenCV_(systemBrokenCV) 
 {
@@ -25,7 +25,7 @@ StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<
 void StrategyEngine::ProcessMarketDataAndGenerateSignals()
 {
     while (systemRunningFlag_.load(std::memory_order_acquire) &&
-	       !systemBrokenFlag_.load(std::memory_order_acquire))
+           !systemBrokenFlag_.load(std::memory_order_acquire))
     {
         TradeData currentMarketData; 
 
@@ -65,12 +65,12 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
             {
                 std::lock_guard<std::mutex> lock(actionSignalMutex_);
                 actionSignalQueue_.enqueue(generatedActionSignal); 
-				actionSignalCV_.notify_one();
-				std::cout << "[Strategy] Generated signal: "
-						  << (generatedActionType == ActionType::BUY ? "BUY" : "SELL")
-						  << " at price $" << std::fixed << std::setprecision(2)
-						  << currentMarketData.price_ << std::endl;
-			}
+                actionSignalCV_.notify_one();
+                std::cout << "[Strategy] Generated signal: "
+                          << (generatedActionType == ActionType::BUY ? "BUY" : "SELL")
+                          << " at price $" << std::fixed << std::setprecision(2)
+                          << currentMarketData.price_ << std::endl;
+            }
         }
         else
         {
