@@ -27,17 +27,19 @@ int main()
 
     // Portfolio state mutex (to protect cash, BTC amount, etc.)
     std::mutex portfolioMutex;
+	
+	std::atmoic<bool>  systemRunningFlag;
 
     std::shared_ptr<MarketData> marketData =
-        std::make_shared<MarketData>(priceQueue, priceCV, priceMutex);
+        std::make_shared<MarketData>(priceQueue, priceCV, priceMutex, systemRunningFlag);
 
     std::shared_ptr<DataReceive> dataReceive =
         std::make_shared<DataReceive>(priceQueue, actionQueue, priceCV,
-                                      priceMutex, actionCV, actionMutex);
+                                      priceMutex, actionCV, actionMutex, systemRunningFlag);
 
     std::shared_ptr<Portfolio> portfolio =
         std::make_shared<Portfolio>(DEFAULT_CASH, actionQueue, actionCV,
-                                    actionMutex, portfolioMutex);
+                                    actionMutex, portfolioMutex, systemRunningFlag);
 
     // Start market data thread, strategy thread, execution thread
     std::thread market_thread(market_data_thread_func, marketData);

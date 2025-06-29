@@ -17,10 +17,10 @@
 class MarketData
 {
 private:
-    std::mutex& priceMutex_;             
-    std::atomic<bool> isDataTracing_;   
+    std::mutex& priceMutex_;              
     SafeQueue<TradeData>& dataQueue_;
     std::condition_variable& dataCV_;
+	std::atmoic<bool>  &systemRunningFlag_;
     std::default_random_engine gen_;
 
 public:
@@ -28,11 +28,7 @@ public:
 
     MarketData(SafeQueue<TradeData>& dataQueue,
                std::condition_variable& dataCV,
-               std::mutex& priceMutex);
-
-    void StartTraceData();
-
-    void StopTraceData();
+               std::mutex& priceMutex, std::atmoic<bool>  &systemRunningFlag);
 
     void TraceData();
 };

@@ -4,11 +4,12 @@ Portfolio::Portfolio(double cash,
                      SafeQueue<ActionSignal>& actionQueue,
                      std::condition_variable& actionCV,
                      std::mutex& actionMutex,
-                     std::mutex& portfolioMutex)
+                     std::mutex& portfolioMutex,
+					 std::atmoic<bool>  &systemRunningFlag)
     : initialCash_(cash), currentCash_(cash),
       actionQueue_(actionQueue), actionCV_(actionCV),
       actionMutex_(actionMutex), portfolioMutex_(portfolioMutex),
-	  isRunning_(false)
+	  isRunning_(false),systemRunningFlag_(systemRunningFlag)
 {
 
 }
@@ -114,7 +115,7 @@ double Portfolio::GetProfit(double currentPrice) const
 
 void Portfolio::TradeExecutionLoop()
 {
-    while (isRunning_)
+    while (systemRunningFlag_)
     {
         ActionSignal action_signal;
 

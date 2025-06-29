@@ -22,19 +22,15 @@ private:
     std::condition_variable& dataCV_;       
     std::condition_variable& actionCV_;    
     std::mutex& priceMutex_;                
-    std::mutex& actionMutex_;               
-    std::atomic<bool> isReceivingData_;     
+    std::mutex& actionMutex_;                 
     doubleVect recentPrices_;         
     TradeAlgorithm tradeAl_; 
+	std::atmoic<bool>  &systemRunningFlag_;
 public:
     DataReceive() = delete;
     DataReceive(SafeQueue<TradeData>& dataQueue, SafeQueue<ActionSignal>& actionQueue,
                 std::condition_variable& dataCV, std::mutex& priceMutex,
-                std::condition_variable& actionCV, std::mutex& actionMutex);
-
-    void StartReceiveData();
-
-    void StopReceiveData();
+                std::condition_variable& actionCV, std::mutex& actionMutex, std::atmoic<bool>  &systemRunningFlag);
 
     void ProcessDataAndGenerateSignals();
 };

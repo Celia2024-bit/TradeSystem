@@ -2,26 +2,17 @@
 
 DataReceive::DataReceive(SafeQueue<TradeData>& dataQueue, SafeQueue<ActionSignal>& actionQueue,
                          std::condition_variable& dataCV, std::mutex& priceMutex,
-                         std::condition_variable& actionCV, std::mutex& actionMutex)
+                         std::condition_variable& actionCV, std::mutex& actionMutex, 
+						 std::atmoic<bool>  &systemRunningFlag)
     : dataQueue_(dataQueue), actionQueue_(actionQueue), dataCV_(dataCV), priceMutex_(priceMutex),
-      actionCV_(actionCV), actionMutex_(actionMutex), isReceivingData_(false)
+      actionCV_(actionCV), actionMutex_(actionMutex), isReceivingData_(false), systemRunningFlag_(systemRunningFlag)
 {
 
-}
-
-void DataReceive::StartReceiveData()
-{
-    isReceivingData_ = true;
-}
-
-void DataReceive::StopReceiveData()
-{
-    isReceivingData_ = false;
 }
 
 void DataReceive::ProcessDataAndGenerateSignals()
 {
-    while (isReceivingData_)
+    while (systemRunningFlag_)
     {
         TradeData market_data; 
 

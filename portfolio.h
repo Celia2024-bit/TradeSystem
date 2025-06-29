@@ -28,9 +28,7 @@ private:
     std::condition_variable& actionCV_;
     std::mutex& actionMutex_;
     std::mutex& portfolioMutex_;
-	std::atomic<bool> isRunning_;   // no cache , no optimized , update at once
-	//Start/Stop in main thread,  TradeExecutionLoop in execution Thread
-	// to avoid unexpected behavior due to caching or compiler optimizations.
+	std::atmoic<bool>  &systemRunningFlag;
 
     bool Buy(double price, double amount);
     bool Sell(double price, double amount);
@@ -44,7 +42,8 @@ public:
               SafeQueue<ActionSignal>& actionQueue,
               std::condition_variable& actionCV,
               std::mutex& actionMutex,
-              std::mutex& portfolioMutex);
+              std::mutex& portfolioMutex, 
+			  std::atmoic<bool>  &systemRunningFlag);
 
     void TradeExecutionLoop();
 
@@ -53,10 +52,6 @@ public:
     double GetProfit(double currentPrice) const;
 
     void PrintStatus(double currentPrice);
-	
-	void StartExecution(); 
-
-	void StopExecution(); 
 };
 
 #endif // PORTFOLIO_H
