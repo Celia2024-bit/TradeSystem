@@ -17,13 +17,13 @@ build_image:
   script:
     - echo "Building Docker image from Dockerfile..."
     # Login to GitLab Container Registry
-   # - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     # Build the Docker image and tag it with the commit SHA and 'latest'
     # $CI_REGISTRY_IMAGE is a predefined variable pointing to your project's registry path
     - docker build -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" -t "$CI_REGISTRY_IMAGE:latest" .
     # Push the built image to the GitLab Container Registry
-    #- docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
-    #- docker push "$CI_REGISTRY_IMAGE:latest"
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+    - docker push "$CI_REGISTRY_IMAGE:latest"
   # Cache Docker layers to speed up subsequent builds (optional but recommended)
   cache:
     key: "$CI_COMMIT_REF_SLUG"
@@ -36,7 +36,7 @@ build_and_test:
   stage: build
   # Use the custom Docker image built in the previous stage
   # This image will have Git, g++, and other tools installed as per your Dockerfile
-  image: my-custom-build-image:local # Use the 'latest' tag of your custom image
+  image: "$CI_REGISTRY_IMAGE:latest" # Use the 'latest' tag of your custom image
   script:
     # Navigate to the project directory.
     # $CI_PROJECT_DIR is a predefined GitLab CI variable that points to the root
