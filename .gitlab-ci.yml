@@ -9,7 +9,7 @@ stages:
 rules:
   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   - if: '$CI_PIPELINE_SOURCE == "web"' # Allows manual triggering from the GitLab UI
-  - if: '$CI_COMMIT_BRANCH' # This means the pipeline runs on pushes to any branch
+  - if: '$CI_COMMIT_BRANCH != null' # This means the pipeline runs on pushes to any branch
 
 # Job to build your custom Docker image
 build_image:
