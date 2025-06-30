@@ -1,5 +1,4 @@
-# Define the stages for the pipeline.
-# We'll add a 'docker_build' stage before the 'build' stage.
+# Define the stages for the pipeline
 stages:
   - docker_build
   - build
@@ -7,9 +6,12 @@ stages:
 # Job to build your custom Docker image
 build_image:
   stage: docker_build
-  image: docker:latest # Use the official Docker image to build other Docker images
+  image: docker:latest
   services:
-    - docker:dind # Enable Docker-in-Docker for building images
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "/certs"
   only:
     - branches
     - merge_requests
@@ -17,57 +19,47 @@ build_image:
   script:
     - echo "Building Docker image from Dockerfile..."
     # Login to GitLab Container Registry
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     # Build the Docker image and tag it with the commit SHA and 'latest'
-    # $CI_REGISTRY_IMAGE is a predefined variable pointing to your project's registry path
     - docker build -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" -t "$CI_REGISTRY_IMAGE:latest" .
     # Push the built image to the GitLab Container Registry
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
     - docker push "$CI_REGISTRY_IMAGE:latest"
-  # Cache Docker layers to speed up subsequent builds (optional but recommended)
+    - echo "Docker image built and pushed successfully!"
   cache:
     key: "$CI_COMMIT_REF_SLUG"
     paths:
-      - .docker/cache # Or wherever your Docker build cache is stored
+      - .docker/cache
 
-
-# Define a single job for building and testing the project
+# Build and test job using the custom Docker image
 build_and_test:
   stage: build
-  # Use the custom Docker image built in the previous stage
-  # This image will have Git, g++, and other tools installed as per your Dockerfile
-  image: "$CI_REGISTRY_IMAGE:latest" # Use the 'latest' tag of your custom image
+  image: "$CI_REGISTRY_IMAGE:latest"
   script:
-    # Navigate to the project directory.
-    # $CI_PROJECT_DIR is a predefined GitLab CI variable that points to the root
-    # of your cloned repository inside the Docker container.
+    # Navigate to the project directory
     - cd "$CI_PROJECT_DIR"
-
     # Clean previous build artifacts
     - echo "Running make clean..."
     - make clean
-
     # Compile all source files
     - echo "Running make all..."
     - make all
-
-    # Execute the compiled trading system and redirect its output to result.txt
-    # On Linux, executables typically have no extension and paths use forward slashes.
-    # The output directory is 'output' relative to the project root.
+    # Execute the compiled trading system and redirect output to result.txt
     - echo "Running trading_system and saving output to result.txt..."
     - ./output/trading_system > result.txt
-
-    # Display the content of result.txt for immediate feedback in the job log
-    - echo "--- Content of result.txt ---"
+    # Display the content of result.txt for immediate feedback
+    - echo "=== Content of result.txt ==="
     - cat result.txt
-    - echo "-----------------------------"
-
-  # Define artifacts to save.
-  # Files specified here will be uploaded to GitLab and can be downloaded from the job page.
+    - echo "========================="
+  # Define artifacts to save
   artifacts:
     paths:
-      - result.txt # This will save the result.txt file
-    expire_in: 1 week # Optional: How long to keep the artifacts
+      - result.txt
+    expire_in: 1 week
   # This job depends on the 'build_image' job
   needs:
     - build_image
+  only:
+    - branches
+    - merge_requests
+    - web
