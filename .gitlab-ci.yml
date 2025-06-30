@@ -4,8 +4,6 @@ stages:
   - docker_build
   - build
 
-# Define rules for when this pipeline should run.
-# This pipeline will only run for merge requests or when manually triggered.
 # Job to build your custom Docker image
 build_image:
   stage: docker_build
@@ -31,13 +29,7 @@ build_image:
     key: "$CI_COMMIT_REF_SLUG"
     paths:
       - .docker/cache # Or wherever your Docker build cache is stored
-  # Ensure this job runs only if the Dockerfile exists
-  only:
-    - merge_requests
-    - web
-    - branches # Also build image on branch pushes to keep 'latest' tag updated
-  tags:
-    - docker # If you have specific runners tagged for Docker builds
+
 
 # Define a single job for building and testing the project
 build_and_test:
