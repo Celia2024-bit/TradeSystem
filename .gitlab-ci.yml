@@ -6,17 +6,16 @@ stages:
 
 # Define rules for when this pipeline should run.
 # This pipeline will only run for merge requests or when manually triggered.
-rules:
-  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-  - if: '$CI_PIPELINE_SOURCE == "web"' # Allows manual triggering from the GitLab UI
-  - if: '$CI_COMMIT_BRANCH != null' # This means the pipeline runs on pushes to any branch
-
 # Job to build your custom Docker image
 build_image:
   stage: docker_build
   image: docker:latest # Use the official Docker image to build other Docker images
   services:
     - docker:dind # Enable Docker-in-Docker for building images
+  only:
+    - branches
+    - merge_requests
+    - web
   script:
     - echo "Building Docker image from Dockerfile..."
     # Login to GitLab Container Registry
