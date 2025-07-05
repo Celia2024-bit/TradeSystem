@@ -7,7 +7,7 @@ CXX = g++
 # -pthread: Link with the POSIX threads library (essential for std::thread, std::mutex, etc.)
 # -g: Include debugging information
 # -O0: No optimization (good for debugging, change to -O2 or -O3 for release)
-CXXFLAGS = -std=c++14 -Wall -Wextra -pthread -g -O0
+CXXFLAGS = -std=c++17 -Wall -Wextra -pthread -g -O0
 
 # Name of the final executable
 TARGET_NAME = trading_system
@@ -48,6 +48,10 @@ $(TARGET): $(OBJS)
 $(OUTPUT_DIR)/%.o: %.cpp $(OUTPUT_DIR) # Ensure output directory exists before compiling
 	@echo "Compiling $<..."
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+
+test_param_check: ./Util/ParameterCheck_Test.cpp
+	$(CXX) $(CXXFLAGS) -o ./Util/test_param_check.exe ./Util/ParameterCheck_Test.cpp
 
 # Rule to clean up generated files and the output directory
 clean:
