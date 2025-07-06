@@ -52,15 +52,8 @@ using DoubleVector = std::vector<double>;
 using TradeDataVector = std::vector<TradeData>;
 
 
-//  More types can be added for checking 
-/**
- * @class IntRange
- * @brief This class is specially used for parameter checking.
- *
- * It represents an integer range with a value `x` and boundaries `min` and `max`.
- * The class provides a method to validate whether `x` lies within the range.
- */
-class IntRange {
+
+struct IntRange {
 public:
     int x;
     int min;
