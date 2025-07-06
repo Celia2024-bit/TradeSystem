@@ -1,0 +1,6 @@
+TradeExecutor.cpp:
+  - bool TradeExecutor::ExecuteBuyOrder(price, amount)
+  - bool TradeExecutor::HandleActionSignal(action, price, amount)
+  
+TradingStrategy.cpp:
+   - ActionType TradingStrategy::CalculateSimpleMovingAverageStrategy(priceHistory)
