@@ -50,8 +50,8 @@ $(OUTPUT_DIR)/%.o: %.cpp $(OUTPUT_DIR) # Ensure output directory exists before c
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 
-test_param_check: ./Util/ParameterCheck_Test.cpp
-	$(CXX) $(CXXFLAGS) -o ./Util/test_param_check.exe ./Util/ParameterCheck_Test.cpp
+test_param_check: ./Util/Test/ParameterCheck_Test.cpp
+	$(CXX) $(CXXFLAGS) -o ./Util/Test/test_param_check.exe ./Util/Test/ParameterCheck_Test.cpp
 
 # Rule to clean up generated files and the output directory
 clean:
