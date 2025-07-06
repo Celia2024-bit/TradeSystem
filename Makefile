@@ -2,7 +2,7 @@
 CXX = g++
 
 # Compiler flags
-# -std=c++14: Use the C++14 standard
+# -std=c++17: Use the C++17 standard
 # -Wall -Wextra: Enable all common and extra warnings
 # -pthread: Link with the POSIX threads library (essential for std::thread, std::mutex, etc.)
 # -g: Include debugging information
@@ -19,15 +19,18 @@ OUTPUT_DIR = output
 TARGET = $(OUTPUT_DIR)/$(TARGET_NAME)
 
 # List of all source files (.cpp)
-SRCS = main.cpp \
-       MarketDataGenerator.cpp \
-       TradeExecutor.cpp \
-       StrategyEngine.cpp \
-       TradingStrategy.cpp
+# Prepend 'src/' to each source file name
+SRCS = src/main.cpp \
+       src/MarketDataGenerator.cpp \
+       src/TradeExecutor.cpp \
+       src/StrategyEngine.cpp \
+       src/TradingStrategy.cpp
 
 # Generate a list of object files (.o) from the source files
-OBJS = $(patsubst %.cpp,$(OUTPUT_DIR)/%.o,$(SRCS))
+# The patsubst function now correctly replaces src/%.cpp with $(OUTPUT_DIR)/%.o
+OBJS = $(patsubst src/%.cpp,$(OUTPUT_DIR)/%.o,$(SRCS))
 
+# Default target: build all
 all: $(OUTPUT_DIR) $(TARGET)
 
 # Rule to create the output directory if it doesn't exist
@@ -43,13 +46,15 @@ $(TARGET): $(OBJS)
 
 # Generic rule to compile .cpp files into .o files within the output directory
 # $@: the target name (e.g., output/main.o)
-# $<: the first prerequisite (e.g., main.cpp)
+# $<: the first prerequisite (e.g., src/main.cpp)
 # -c (or --compile) means "compile and assemble, but do not link."
-$(OUTPUT_DIR)/%.o: %.cpp $(OUTPUT_DIR) # Ensure output directory exists before compiling
+$(OUTPUT_DIR)/%.o: src/%.cpp $(OUTPUT_DIR) # Ensure output directory exists before compiling
 	@echo "Compiling $<..."
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-
+# Example for a specific test compilation (assuming this file is still in a subfolder like Util/Test)
+# If ParameterCheck_Test.cpp is also moved to src, this rule would need adjustment.
+# For now, assuming it remains in its original relative path.
 test_param_check: ./Util/Test/ParameterCheck_Test.cpp
 	$(CXX) $(CXXFLAGS) -o ./Util/Test/test_param_check.exe ./Util/Test/ParameterCheck_Test.cpp
 
@@ -61,4 +66,4 @@ clean:
 	@echo "Clean complete."
 
 # Phony targets are not actual files, but commands
-.PHONY: all clean
+.PHONY: all clean test_param_check
