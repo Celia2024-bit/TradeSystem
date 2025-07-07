@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
     pip3 install pyyaml && \
     rm -rf /var/lib/apt/lists/*
 
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
 # Verify installations
 RUN git --version && \
     g++ --version && \
