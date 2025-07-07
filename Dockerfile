@@ -4,19 +4,28 @@ FROM ubuntu:22.04
 # Set environment variables to prevent interactive prompts during apt installs
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update package lists and install necessary tools:
+# Install necessary packages:
 # git: for cloning repositories
-# build-essential: includes g++ and make, essential for C/C++ compilation
-# ca-certificates: often needed for HTTPS connections (e.g., for git clone)
-RUN apt-get update && \
-    apt-get install -y \
+# build-essential: includes g++ and make for C/C++ compilation
+# ca-certificates: SSL certificates for HTTPS connections
+# python3: Python 3 interpreter
+# python3-pip: Python package manager
+RUN apt-get update && apt-get install -y \
     git \
     build-essential \
-    ca-certificates && \
+    ca-certificates \
+    python3 \
+    python3-pip && \
+    pip3 install pyyaml && \
     rm -rf /var/lib/apt/lists/*
 
-# Verify installations (optional, but good for debugging Dockerfile)
-RUN git --version && g++ --version && make --version
+# Verify installations
+RUN git --version && \
+    g++ --version && \
+    make --version && \
+    python3 --version && \
+    pip3 --version && \
+    python3 -c "import yaml; print('PyYAML version:', yaml.__version__)"
 
 # Set the working directory for subsequent instructions.
 # GitLab CI will clone your repository into its own working directory,

@@ -35,11 +35,10 @@ build_image:
     key: "$CI_COMMIT_REF_SLUG"
     paths:
       - .docker/cache
-
 # 2. Run the pre-build Python script using the built image
 pre_build_job:
   stage: pre_build
-  image: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+  image: "$CI_REGISTRY_IMAGE:latest"
   needs:
     - build_image
   script:
