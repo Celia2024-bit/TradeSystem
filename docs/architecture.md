@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Bitcoin Trading System is built on a **4-thread architecture** designed for high-performance, real-time trading simulation. The system uses thread-safe communication mechanisms and atomic operations to ensure data integrity and system reliability.
+The Crypto Trading System is built on a **4-thread architecture** designed for high-performance, real-time trading simulation. The system uses thread-safe communication mechanisms and atomic operations to ensure data integrity and system reliability.
 
 ## System Architecture Diagram
 

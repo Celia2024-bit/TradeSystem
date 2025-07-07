@@ -1,6 +1,6 @@
-# Bitcoin Trading System
+# Crypto Trading System
 
-A high-performance multi-threaded Bitcoin trading simulation system built with C++.
+A high-performance multi-threaded Crypto trading simulation system built with C++.
 
 ## Features
 
@@ -9,29 +9,31 @@ A high-performance multi-threaded Bitcoin trading simulation system built with C
 - **Automated Parameter Validation**: Template-based error checking and logging
 - **CI/CD Integration**: Automated build, test, and deployment with Docker
 - **Code Enhancement Tools**: Python-based automation for adding safety checks
+- **Modern C++ Compatibility**: Template-based system leverages C++17 features for compile-time type validation
 
 ## Quick Start
 
 ### Prerequisites
-- C++ compiler with C++11 support
+- C++ compiler with C++17 support
 - Make
 - Docker (optional)
 
 ### Building and Running
 ```bash
 # Build
-make
+make all
 
 # Run
-./bitcoin-trading-system
+./output/trading_system.exe
 
 # Results will be saved to result.txt
+# Errors will be saved to parameter_check.log and error.log
 ```
 
 ### Docker
 ```bash
-docker build -t bitcoin-trading-system .
-docker run bitcoin-trading-system
+docker build -t crypto-trading-system .
+docker run -it --rm rrypto-trading-system bash
 ```
 
 ## Project Structure
@@ -47,12 +49,7 @@ docker run bitcoin-trading-system
 
 - [Architecture Design](docs/architecture.md) - System design and threading model
 - [Development Tools](docs/development-tools.md) - Code enhancement and validation tools
-- [API Documentation](docs/api.md) - Function and class references
 - [Changelog](CHANGELOG.md) - Version history and updates
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
 ## License
 
