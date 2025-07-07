@@ -1,7 +1,6 @@
 # Define the stages for the pipeline
 stages:
   - docker_build
-  - pre_build
   - build
 
 # Assume the Dockerfile version is passed as a CI/CD variable or hardcoded
@@ -35,29 +34,19 @@ build_image:
     key: "$CI_COMMIT_REF_SLUG"
     paths:
       - .docker/cache
-# 2. Run the pre-build Python script using the built image
-pre_build_job:
-  stage: pre_build
-  image: "$CI_REGISTRY_IMAGE:latest"
-  needs:
-    - build_image
-  script:
-    - python tools/Add_check_all.py src
-  only:
-    - branches
-    - merge_requests
-    - web
 
 # Build and test job using the custom Docker image
 build_and_test:
   stage: build
-  image: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+  image: "$CI_REGISTRY_IMAGE:latest"
   script:
     # Navigate to the project directory
     - cd "$CI_PROJECT_DIR"
     # Clean previous build artifacts
     - echo "Running make clean..."
     - make clean
+    # Add type-safe check and error handling into the files defined in the Config.yaml
+    - python tools/Add_check_all.py src
     # Compile all source files
     - echo "Running make all..."
     - make all
@@ -77,7 +66,7 @@ build_and_test:
     expire_in: 1 week
   # This job depends on the 'build_image' job
   needs:
-    - pre_build_job
+    - build_image
   only:
     - branches
     - merge_requests
