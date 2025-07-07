@@ -7,7 +7,7 @@
 #include <condition_variable>  // For std::condition_variable (for thread synchronization)
 
 // Include necessary custom headers for the trading system components
-#include "SafeQueue.h"
+#include "../util/SafeQueue.h"
 #include "MarketDataGenerator.h" // Renamed from MarketData.h
 #include "StrategyEngine.h"      // Renamed from DataReceive.h
 #include "TradeExecutor.h"

@@ -12,7 +12,7 @@
 #include <random>
 #include <iomanip>
 #include "Types.h"
-#include "SafeQueue.h"
+#include "../util/SafeQueue.h"
 
 class MarketDataGenerator
 {

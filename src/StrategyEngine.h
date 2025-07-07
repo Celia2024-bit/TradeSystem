@@ -11,7 +11,7 @@
 #include <chrono>
 #include <random>
 #include "Types.h"
-#include "SafeQueue.h"
+#include "../util/SafeQueue.h"
 #include "TradingStrategy.h"
 
 class StrategyEngine
