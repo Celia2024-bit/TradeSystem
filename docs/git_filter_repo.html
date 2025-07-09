@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cleaning Git History with git filter-repo – By Celia</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 2rem;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    code {
+      background: #eee;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+   pre {
+      background: #f4f4f4;
+      color: #2c3e50;
+      padding: 1rem;
+      border-radius: 6px;
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+      overflow-x: auto;
+      font-size: 0.95em;
+   }
+    blockquote {
+      border-left: 4px solid #ccc;
+      padding-left: 1rem;
+      color: #555;
+      margin: 1.5rem 0;
+      background: #fcfcfc;
+    }
+    a {
+      color: #2980b9;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧹 Cleaning Git History with Precision</h1>
+  <h2>My Real-World Experience Using <code>git filter-repo</code></h2>
+  <p><strong>Author:</strong> Celia</p>
+  <p><strong>Domain:</strong> CI/CD modular automation, Git history refactoring, Python tooling</p>
+  <p><strong>Project Context:</strong> Migrating a public <code>util/</code> folder into a private submodule and removing legacy traces for security and clarity</p>
+
+  <h2>🚀 Why I Did It</h2>
+  <p>In a recent restructuring effort, I converted a public <code>util/</code> folder into a <strong>private submodule</strong>—for cleaner architecture and better security control. To avoid exposing legacy code or cluttering my Git history, I decided to <strong>completely remove all traces</strong> of <code>util/</code> from the main repository.</p>
+
+  <h2>🔧 Tool of Choice: <code>git filter-repo</code></h2>
+  <p>After researching different approaches, I chose <a href="https://github.com/newren/git-filter-repo" target="_blank">git filter-repo</a>—a fast and modern alternative to <code>git filter-branch</code>.</p>
+
+  <h3>✅ Command That Worked</h3>
+  <pre><code>git filter-repo --path util --invert-paths</code></pre>
+  <ul>
+    <li>Removes <code>util/</code> from every commit</li>
+    <li>Keeps all other repo history intact</li>
+    <li>Ideal for cleaning out deprecated or sensitive components</li>
+  </ul>
+
+  <h2>💥 Unexpected Issue: Remote Disappeared</h2>
+  <p>After the filter, I realized I could no longer push—Git had wiped my <code>origin</code> remote.</p>
+
+  <h3>✅ Solution</h3>
+  <pre><code>git remote add origin https://your-repo-url.git
+git fetch origin
+git push origin --force</code></pre>
+
+  <blockquote>
+    Tip: Always back up remote info before running destructive commands:<br/>
+    <code>git remote -v > remote-backup.txt</code>
+  </blockquote>
+
+  <h2>📤 Bonus Use Case: Extract Just One Folder’s History</h2>
+  <p>If instead of deleting, you want to <strong>preserve only one folder’s history</strong>, this works beautifully:</p>
+  <pre><code>git filter-repo --path util</code></pre>
+  <ul>
+    <li>Deletes everything else</li>
+    <li>Keeps all commits that touched the <code>util/</code> folder</li>
+    <li>Perfect for migration to a standalone repo or lightweight module</li>
+  </ul>
+
+  <h2>💡 Developer Reflection</h2>
+  <blockquote>
+    “I used to think submodules and Git history rewriting were too advanced. But once I tackled it directly, step by step, I realized the real barrier wasn’t technical—it was psychological. Most things feel intimidating only until you start asking ‘what does this actually do?’”
+  </blockquote>
+  <p>Submodules aren’t scary. Neither is rewriting Git history. Once I stopped relying on pre-built environments and started exploring architectural tools on my own, I gained <strong>confidence, clarity, and full control</strong> over my CI/CD pipeline.</p>
+
+  <h2>🧪 My Reproducible Workflow</h2>
+  <pre><code># Backup everything
+cp -r project project-backup
+
+# Install the tool
+pip install git-filter-repo
+
+# Clean target folder from all history
+git filter-repo --path util --invert-paths
+
+# Reconnect the remote and push
+git remote add origin https://your-repo-url.git
+git fetch origin
+git push origin --force
+
+# Optional cleanup
+git gc --prune=all --aggressive</code></pre>
+
+  <h2>💬 Final Thought</h2>
+  <p>Whether you're optimizing pipelines, securing sensitive logic, or simply refactoring legacy layouts—don’t fear advanced tools. Most “complex” tasks become transparent when you commit to exploring them fully.</p>
+  <p>I'm building modular automation where public interfaces stay clean, private logic is injectable via Python scripts, and CI/CD workflows are lightweight and robust.</p>
+
+  <p><em>Thanks for reading. For more technical notes or project stories, connect with me on <a href="#" target="_blank">LinkedIn</a>.</em></p>
+
+</body>
+</html>
