@@ -26,6 +26,10 @@ All notable changes to this project will be documented in this file.
   - Protected Python automation scripts (Add_check_all.py) from public access
   - Implemented proper authentication for automated processes
   - Configured access control for CI/CD pipeline
+- **Sensitive Commit History Cleanup**:  
+  - Removed all historical commits from the main repository that contained sensitive or proprietary code, ensuring that no traces remain in the public commit history.
+  - Utilized history rewriting tools (such as `git filter-repo` or `git filter-branch`) to permanently erase all references to sensitive files or logic from the repository’s history.
+  - Now, the public repository only contains the main trading logic; all sensitive or private code is managed exclusively in the private submodule.
 
 ### Changed
 - **Code Organization**: Restructured project with clear separation of concerns
@@ -35,6 +39,11 @@ All notable changes to this project will be documented in this file.
   - Enhanced maintainability with independent versioning of utilities and automation tools
 - **Access Control**: Transitioned from public to private utility and automation tool access
 - **Build Process**: Updated `.gitmodules` configuration and deployment scripts
+- **Repository Security**:  
+  - Enhanced security by ensuring that sensitive code cannot be recovered from previous commits.
+  - All sensitive code and related commit history are now fully isolated from the public repository.
+  - All collaborators have been notified to re-clone the repository to avoid referencing obsolete commit histories.
+  - The main repository’s history is now fully sanitized, with no accessible record of previously public sensitive code.
 
 ### Technical Details
 - Submodule configuration with proper authentication setup
