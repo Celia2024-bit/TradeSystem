@@ -6,6 +6,17 @@ stages:
 # Assume the Dockerfile version is passed as a CI/CD variable or hardcoded
 variables:
   DOCKERFILE_VERSION: "v1.1"
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_UPDATE_FLAGS: --remote
+  GIT_SUBMODULE_DEPTH: 1
+  GIT_DEPTH: 0
+
+default:
+  hooks:
+    pre_get_sources_script:
+      - git config --global "credential.${CI_SERVER_PROTOCOL}://${CI_SERVER_FQDN}.username" gitlab-ci-token
+      - git config --global "credential.${CI_SERVER_PROTOCOL}://${CI_SERVER_FQDN}.helper" '!f(){ if [ "$1" = "get" ] ; then echo "password=${CI_JOB_TOKEN}" ; fi ; } ; f'
+      - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/".insteadOf "https://gitlab.com/" 
 
 # Job to build your custom Docker image
 build_image:
@@ -42,6 +53,9 @@ build_and_test:
   script:
     # Navigate to the project directory
     - cd "$CI_PROJECT_DIR"
+    - pwd
+    - ls -la util/
+    - ls -la tools/
     # Clean previous build artifacts
     - echo "Running make clean..."
     - make clean
