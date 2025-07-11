@@ -1,4 +1,8 @@
 #include "MarketDataGenerator.h" 
+
+
+constexpr uint32_t DATA_COUNT = 100;
+
 MarketDataGenerator::MarketDataGenerator(SafeQueue<TradeData>& marketDataQueue,
                        std::condition_variable& marketDataCV,
                        std::mutex& marketDataMutex,
@@ -24,7 +28,7 @@ void MarketDataGenerator::GenerateMarketData()
 
     while (systemRunningFlag_.load(std::memory_order_acquire) &&
            !systemBrokenFlag_.load(std::memory_order_acquire) &&
-           dataCount_ < 100 )
+           dataCount_ < DATA_COUNT )
     {
 
         double change = priceFluctuationDistribution(gen_);
@@ -47,12 +51,13 @@ void MarketDataGenerator::GenerateMarketData()
         // Attention : Just for test 
         dataCount_++;
         // Simulate a critical error after 20 data points for demonstration
-        if (dataCount_ == 90) { //
-            std::cout << "[Market Data] Simulating critical error after 20 data points." << std::endl; //
-            std::lock_guard<std::mutex> lock(systemBrokenMutex_); //
-            systemBrokenFlag_.store(true, std::memory_order_release); //
-            systemBrokenCV_.notify_all(); //
-        }
+    }
+    
+    if (dataCount_ == DATA_COUNT) { //
+        std::cout << "[Market Data] Simulating critical error after 20 data points." << std::endl; //
+        std::lock_guard<std::mutex> lock(systemBrokenMutex_); //
+        systemBrokenFlag_.store(true, std::memory_order_release); //
+        systemBrokenCV_.notify_all(); //
     }
     std::cout << "[Market Data] Data tracing stopped." << std::endl;
 }

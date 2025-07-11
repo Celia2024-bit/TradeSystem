@@ -18,6 +18,7 @@ void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> mark
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
 void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 
+constexpr uint32_t WAIT_SECONDS = 300;
 int main()
 {
     // --- 1. Shared Resources: Queues and their synchronization primitives ---

@@ -26,7 +26,7 @@ private:
     std::condition_variable& systemBrokenCV_;
     std::default_random_engine gen_;
     // Attention: just for test 
-    int dataCount_ = 0;
+    uint32_t dataCount_ = 0;
 
 public:
     MarketDataGenerator() = delete;
