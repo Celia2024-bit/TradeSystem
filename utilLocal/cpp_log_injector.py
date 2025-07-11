@@ -18,23 +18,6 @@ def find_cpp_files(src_folder):
     
     return cpp_files
 
-def extract_function_name(function_signature):
-    """
-    Extract function name from function signature.
-    This function correctly identifies the function name,
-    handling cases with or without class/namespace prefixes (e.g., Class::Function).
-    It captures the last identifier before the opening parenthesis.
-    """
-    # Pattern to match function name (handles class::function format)
-    # (?:\w+::)* : Matches zero or more occurrences of 'word::' (non-capturing)
-    # (\w+)     : Captures the actual function name (the word before '(')
-    # \s*\(     : Matches zero or more whitespace characters followed by an opening parenthesis
-    pattern = r'(?:\w+::)*(\w+)\s*\('
-    match = re.search(pattern, function_signature)
-    if match:
-        return match.group(1) # Group 1 contains the captured function name
-    return "Unknown"
-
 def process_cpp_file(file_path):
     """Process a single C++ file and add LOG statements"""
     print(f"Processing: {file_path}")
@@ -76,7 +59,7 @@ def process_cpp_file(file_path):
                 j += 1
             
             if found_opening_brace:
-                function_name = extract_function_name(function_signature)
+                function_name = __FUNCTION__
                 print(f"  Found function: {function_name}")
                 
                 # Add lines up to and including the opening brace
@@ -143,7 +126,7 @@ def process_cpp_file(file_path):
         return True
 
 def main():
-    src_folder = "../src"
+    src_folder = "src"
     
     # Check if src folder exists
     if not os.path.exists(src_folder):
