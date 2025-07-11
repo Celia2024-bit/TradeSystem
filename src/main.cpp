@@ -18,7 +18,7 @@ void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> mark
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
 void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 
-constexpr uint32_t WAIT_SECONDS = 300;
+constexpr uint32_t WAIT_SECONDS = 30;
 int main()
 {
     // --- 1. Shared Resources: Queues and their synchronization primitives ---
@@ -56,12 +56,12 @@ int main()
     std::thread strategy_engine_thread(strategy_engine_thread_func, strategyEngine);
     std::thread trade_execution_thread(trade_execution_thread_func, tradeExecutor);
 
-    std::cout << "Main: All threads started. Running for 30 seconds or until a critical error..." << std::endl;
+    std::cout << "Main: All threads started. Running for WAIT_SECONDS seconds or until a critical error..." << std::endl;
 
     // --- 5. Main Thread's Waiting Loop for System Shutdown Trigger ---
     {
         std::unique_lock<std::mutex> lock(systemBrokenMutex);
-        systemBrokenCV.wait_for(lock, std::chrono::seconds(30), [&]{
+        systemBrokenCV.wait_for(lock, std::chrono::seconds(WAIT_SECONDS), [&]{
             return systemBrokenFlag.load(std::memory_order_acquire);
         });
     }
