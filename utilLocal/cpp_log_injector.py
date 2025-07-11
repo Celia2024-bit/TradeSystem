@@ -143,7 +143,7 @@ def process_cpp_file(file_path):
         return True
 
 def main():
-    src_folder = "src"
+    src_folder = "../src"
     
     # Check if src folder exists
     if not os.path.exists(src_folder):
