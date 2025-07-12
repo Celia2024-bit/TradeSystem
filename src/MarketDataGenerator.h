@@ -13,6 +13,7 @@
 #include <iomanip>
 #include "Types.h"
 #include "../util/SafeQueue.h"
+#include "../util/Logger.h"
 
 class MarketDataGenerator
 {

@@ -4,6 +4,7 @@
 #include <chrono>
 #include <vector>
 
+
 enum class ActionType
 {
     BUY,
@@ -66,5 +67,19 @@ public:
         return x >= min && x <= max;
     }
 };
+
+
+enum CustomerLogLevel 
+{  
+    Main = 1, 
+    MarketData,
+    Strategy, 
+    Execution,  // Fixed typo: was "ExecutioN"
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR
+};
+
 
 #endif // TYPES_H

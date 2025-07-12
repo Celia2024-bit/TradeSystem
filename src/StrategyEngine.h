@@ -13,6 +13,7 @@
 #include "Types.h"
 #include "../util/SafeQueue.h"
 #include "TradingStrategy.h"
+#include "../util/Logger.h"
 
 class StrategyEngine
 {

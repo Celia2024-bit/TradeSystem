@@ -13,6 +13,7 @@
 
 #include "Types.h"
 #include "../util/SafeQueue.h"
+#include "../util/Logger.h"
 
 constexpr double DEFAULT_CASH = 10000.0; 
 
@@ -40,6 +41,7 @@ private:
     bool ExecuteSellOrder(double price, double amount);
 
     bool HandleActionSignal(ActionType action, double price, double amount);
+    std::stringstream ss;
 
 public:
     TradeExecutor() = delete;

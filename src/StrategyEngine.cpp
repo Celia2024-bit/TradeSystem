@@ -35,14 +35,14 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
             if (!marketDataCV_.wait_for(lock, std::chrono::seconds(2),
                                   [this] { return !marketDataQueue_.empty(); }))
             {
-                std::cout << "[Strategy] Timeout waiting for price data, continuing..." << std::endl;
+                LOG(Strategy) << " Timeout waiting for price data, continuing..." << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100)); 
                 continue;
             }
             currentMarketData = marketDataQueue_.dequeue();
         }
 
-        std::cout << "[Strategy] Received price: $" << std::fixed << std::setprecision(2)
+        LOG(Strategy) << " Received price: $" << std::fixed << std::setprecision(2)
                   << currentMarketData.price_ << std::endl;
 
         priceHistory_.push_back(currentMarketData.price_);
@@ -66,7 +66,7 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
                 std::lock_guard<std::mutex> lock(actionSignalMutex_);
                 actionSignalQueue_.enqueue(generatedActionSignal); 
                 actionSignalCV_.notify_one();
-                std::cout << "[Strategy] Generated signal: "
+                LOG(Strategy) << " Generated signal: "
                           << (generatedActionType == ActionType::BUY ? "BUY" : "SELL")
                           << " at price $" << std::fixed << std::setprecision(2)
                           << currentMarketData.price_ << std::endl;
@@ -74,10 +74,10 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
         }
         else
         {
-            std::cout << "[Strategy] No signal (HOLD)." << std::endl;
+            LOG(Strategy) << "No signal (HOLD)." ;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-    std::cout << "[Strategy] Data processing stopped." << std::endl;
+    LOG(Strategy) << "Data processing stopped." ;
 }

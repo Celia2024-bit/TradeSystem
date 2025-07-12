@@ -45,8 +45,8 @@ void MarketDataGenerator::GenerateMarketData()
 
         marketDataCV_.notify_one(); 
 
-        std::cout << "[Market Data] New price: $" << std::fixed << std::setprecision(2)
-                  << currentPrice << std::endl;
+        LOG(MarketData) << " New price: $" << std::fixed << std::setprecision(2)
+                  << currentPrice ;
         std::this_thread::sleep_for(std::chrono::milliseconds(500)); // 0.5 seconds per update
         // Attention : Just for test 
         dataCount_++;
@@ -54,10 +54,10 @@ void MarketDataGenerator::GenerateMarketData()
     }
     
     if (dataCount_ == DATA_COUNT) { //
-        std::cout << "[Market Data] Simulating critical error after 20 data points." << std::endl; //
+        LOG(MarketData) << "Simulating critical error after 20 data points." ; //
         std::lock_guard<std::mutex> lock(systemBrokenMutex_); //
         systemBrokenFlag_.store(true, std::memory_order_release); //
         systemBrokenCV_.notify_all(); //
     }
-    std::cout << "[Market Data] Data tracing stopped." << std::endl;
+    LOG(MarketData) << "Data tracing stopped." ;
 }

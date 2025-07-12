@@ -13,7 +13,6 @@
 #include "TradeExecutor.h"
 #include "Types.h"               // Common data types and enums
 #include "../util/Logger.h"
-
 // Forward declarations of thread functions.
 void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator);
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
@@ -21,23 +20,11 @@ void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 
 constexpr uint32_t WAIT_SECONDS = 30;
 
-enum CustomerLogLevel 
-{  
-    Main = 1, 
-    MarketData,
-    Strategy, 
-    Execution,  // Fixed typo: was "ExecutioN"
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR
-};
-
 LevelMapping customMappings = {
     {Main,        "Main"},
     {MarketData,  "Market Data"},
     {Strategy,    "Strategy"},
-    {Execution,   "Execution"},
+    {Execution,   "Trade Executor"},
     {DEBUG,       "DEBUG"},
     {INFO,        "INFO"},
     {WARN,        "WARN"},
@@ -48,6 +35,7 @@ int main()
 {
     // --- 0  Init Log , formate 
     LOGINIT(customMappings);
+    Logger::getInstance().setLevel(CustomerLogLevel::Main);
     Logger::getInstance().setFormatter([](const LogMessage& msg) {
         std::stringstream ss;
         ss << msg.levelName << " :: " << msg.message;
@@ -88,8 +76,7 @@ int main()
     std::thread strategy_engine_thread(strategy_engine_thread_func, strategyEngine);
     std::thread trade_execution_thread(trade_execution_thread_func, tradeExecutor);
 
-    std::cout << "Main: All threads started. Running for WAIT_SECONDS seconds or until a critical error..." << std::endl;
-
+    LOG(Main) << " All threads started. Running for WAIT_SECONDS seconds or until a critical error..." ;
     // --- 5. Main Thread's Waiting Loop for System Shutdown Trigger ---
     {
         std::unique_lock<std::mutex> lock(systemBrokenMutex);
@@ -103,7 +90,7 @@ int main()
     marketDataCV.notify_all();
     actionSignalCV.notify_all();
 
-    std::cout << "Main: Signaling threads to shut down..." << std::endl;
+    LOG(Main) << "Signaling threads to shut down..." ;
 
     // --- 7. Joining Threads: Waiting for all worker threads to complete ---
     market_data_generator_thread.join();
@@ -112,9 +99,9 @@ int main()
 
     // --- 8. Final Status Report and Program Exit ---
     if (systemBrokenFlag.load(std::memory_order_acquire)) {
-        std::cout << "\n--- Main: System stopped due to a critical error in one of the components! ---\n" << std::endl;
+        LOG(Main) << "\n--- System stopped due to a critical error in one of the components! ---\n" ;
     } else {
-        std::cout << "\n--- Main: System stopped gracefully after running for the specified duration. ---\n" << std::endl;
+        LOG(Main) << "\n---  System stopped gracefully after running for the specified duration. ---\n" ;
     }
     
     // Retrieve the last known price from TradeExecutor
