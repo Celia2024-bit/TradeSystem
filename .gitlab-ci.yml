@@ -56,16 +56,9 @@ build_and_test:
     - pwd
     - ls -la util/
     - ls -la tools/
-    # Clean previous build artifacts
-    - echo "Running make clean..."
-    - make clean
-    # Add type-safe check and error handling into the files defined in the Config.yaml
-    - python tools/Add_check_all.py src
-    # Compile all source files
-    - echo "Running make all..."
-    - make all
     # Execute the compiled trading system and redirect output to result.txt
     - echo "Running trading_system and saving output to result.txt..."
+    - python RunTradeSystem.py
     - ./output/trading_system > result.txt
     # Display the content of result.txt for immediate feedback
     - echo "=== Content of result.txt ==="
