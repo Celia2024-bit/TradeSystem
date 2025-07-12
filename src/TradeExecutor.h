@@ -1,19 +1,8 @@
 #ifndef TRADEEXECUTOR_H
 #define TRADEEXECUTOR_H
 
-#include <queue>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
-#include <vector>
-#include <thread>
-#include <iostream>
-#include <chrono>
+#include "pch.h"
 #include <iomanip>
-
-#include "Types.h"
-#include "../util/SafeQueue.h"
-#include "../util/Logger.h"
 
 constexpr double DEFAULT_CASH = 10000.0; 
 

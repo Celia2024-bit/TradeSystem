@@ -1,19 +1,8 @@
 #ifndef STRATEGYENGINE_H
 #define STRATEGYENGINE_H
 
-#include <queue>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
-#include <vector>
-#include <thread>
-#include <iostream>
-#include <chrono>
-#include <random>
-#include "Types.h"
-#include "../util/SafeQueue.h"
+#include "pch.h"
 #include "TradingStrategy.h"
-#include "../util/Logger.h"
 
 class StrategyEngine
 {

@@ -1,9 +1,7 @@
 #ifndef TRADINGSTRATEGY_H
 #define TRADINGSTRATEGY_H
 
-#include <vector>
-#include <numeric>
-#include "Types.h" 
+#include "pch.h"
 
 class TradingStrategy
 {

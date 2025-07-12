@@ -1,19 +1,10 @@
 #ifndef MARKETDATAGENERATOR_H
 #define MARKETDATAGENERATOR_H
 
-#include <queue>
-#include <mutex>
-#include <condition_variable>
-#include <atomic>
-#include <vector>
-#include <thread>
-#include <iostream>
-#include <chrono>
+#include "pch.h"
 #include <random>
 #include <iomanip>
-#include "Types.h"
-#include "../util/SafeQueue.h"
-#include "../util/Logger.h"
+
 
 class MarketDataGenerator
 {

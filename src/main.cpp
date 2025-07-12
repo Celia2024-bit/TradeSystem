@@ -1,18 +1,12 @@
 #include <iostream>
 #include <thread>
 #include <memory>
-#include <atomic>              // For std::atomic (e.g., systemRunningFlag, systemBrokenFlag)
-#include <chrono>              // For std::chrono (e.g., sleep_for, seconds)
-#include <mutex>               // For std::mutex (for protecting shared data)
-#include <condition_variable>  // For std::condition_variable (for thread synchronization)
 
 // Include necessary custom headers for the trading system components
-#include "../util/SafeQueue.h"
 #include "MarketDataGenerator.h" // Renamed from MarketData.h
 #include "StrategyEngine.h"      // Renamed from DataReceive.h
 #include "TradeExecutor.h"
-#include "Types.h"               // Common data types and enums
-#include "../util/Logger.h"
+
 // Forward declarations of thread functions.
 void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator);
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
