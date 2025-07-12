@@ -12,6 +12,7 @@
 #include "StrategyEngine.h"      // Renamed from DataReceive.h
 #include "TradeExecutor.h"
 #include "Types.h"               // Common data types and enums
+#include "../util/Logger.h"
 
 // Forward declarations of thread functions.
 void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator);
@@ -19,8 +20,39 @@ void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine)
 void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 
 constexpr uint32_t WAIT_SECONDS = 30;
+
+enum CustomerLogLevel 
+{  
+    Main = 1, 
+    MarketData,
+    Strategy, 
+    Execution,  // Fixed typo: was "ExecutioN"
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR
+};
+
+LevelMapping customMappings = {
+    {Main,        "Main"},
+    {MarketData,  "Market Data"},
+    {Strategy,    "Strategy"},
+    {Execution,   "Execution"},
+    {DEBUG,       "DEBUG"},
+    {INFO,        "INFO"},
+    {WARN,        "WARN"},
+    {ERROR,       "ERROR"}
+};
+
 int main()
 {
+    // --- 0  Init Log , formate 
+    LOGINIT(customMappings);
+    Logger::getInstance().setFormatter([](const LogMessage& msg) {
+        std::stringstream ss;
+        ss << msg.levelName << " :: " << msg.message;
+        return ss.str();
+    });
     // --- 1. Shared Resources: Queues and their synchronization primitives ---
     SafeQueue<TradeData> marketDataQueue;
     std::mutex marketDataMutex;

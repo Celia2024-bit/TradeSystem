@@ -24,7 +24,8 @@ SRCS = src/main.cpp \
        src/MarketDataGenerator.cpp \
        src/TradeExecutor.cpp \
        src/StrategyEngine.cpp \
-       src/TradingStrategy.cpp
+       src/TradingStrategy.cpp \
+       util/Logger.cpp
 
 # Generate a list of object files (.o) from the source files
 # The patsubst function now correctly replaces src/%.cpp with $(OUTPUT_DIR)/%.o
