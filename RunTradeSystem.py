@@ -11,11 +11,13 @@ def run_script(path, interpreter=None, args=None):
         print(f"❌ Failed to run: {' '.join(cmd)}\nError: {e}")
 
 def main():
+    subprocess.run("rm -rf src/*.cpp.bak", shell=True, check=True)
     run_script("utilLocal/UserDefineTradeTimeCountYmalFile.py", interpreter="python3")
-    run_script("utilLocal/cpp_log_injector.py", interpreter="python3")  # Assumes it's a compiled binary or shell script
+    run_script("utilLocal/CppLogInjector.py", interpreter="python3")  # Assumes it's a compiled binary or shell script
     run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])
 
     try:
+        subprocess.run(["make", "clean"], check=True)
         subprocess.run(["make", "all"], check=True)
         print("✅ Build successful: make all")
     except subprocess.CalledProcessError as e:
