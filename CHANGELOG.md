@@ -6,10 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### Planned
 
-- Add configurable test data volume and duration (currently hardcoded)
+- Add configurable test data volume and duration (currently hardcoded) ；done
 - Implement recursive directory processing for Add_check_all.py (-R flag)
 - Move Config.yaml to utils/ directory :done
 - Add include support for Config.yaml to support subdirectory configurations
+
+## [2025-07-12] - Enhanced Automation and Stress Testing
+
+1. Added a new `py` utility that automatically inserts log statements at the beginning and end of all files. This makes it easier to trace the entire logic flow of the system.
+2. Users can now customize `TradeTime` and `TradeDataCount` via the `config/TradeTimeCount.yaml` file.
+3. Performed a 30-minute stress test on the entire project. No errors or crashes occurred. The test results have been uploaded to the `result` folder.
+4. Introduced `RunTradeSystem.py`. Users only need to execute this script to automatically add log files, compile the code, and run the system in one seamless step — no additional setup required.
 
 ## [2025-07-11] - Advanced Logging System Implementation
 
