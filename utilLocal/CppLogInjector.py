@@ -59,9 +59,6 @@ def process_cpp_file(file_path):
                 j += 1
             
             if found_opening_brace:
-                function_name = __FUNCTION__
-                print(f"  Found function: {function_name}")
-                
                 # Add lines up to and including the opening brace
                 while i < j:
                     i += 1
@@ -76,7 +73,8 @@ def process_cpp_file(file_path):
                         indent = re.match(r'^(\s*)', lines[k]).group(1)
                         break
                 
-                start_log = f'{indent}LOG(CustomerLogLevel::INFO, "This is start of {function_name}.");\n'
+                start_log = f'{indent}LOG(CustomerLogLevel::INFO) << " This is start of " << __FILE__ << "::" << __FUNCTION__;\n'
+             
                 modified_lines.append(start_log)
                 
                 # Now find the matching closing brace
@@ -101,7 +99,7 @@ def process_cpp_file(file_path):
                                 modified_lines.pop()
                                 
                                 # Add stop LOG statement
-                                stop_log = f'{indent}LOG(CustomerLogLevel::INFO, "This is stop of {function_name}.");\n'
+                                stop_log = f'{indent}LOG(CustomerLogLevel::INFO) << " This is stop of " << __FILE__ << "::" << __FUNCTION__;\n'
                                 modified_lines.append(stop_log)
                                 
                                 # Add the closing brace back
