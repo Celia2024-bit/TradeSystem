@@ -39,7 +39,7 @@ def modify_constant(file_path, new_value, constant_name):
         return False
 
 def main():
-    config_path = "config/TradeTimeCount.yaml"
+    config_path = "config/config.yaml"
     if not os.path.exists(config_path):
         print(f"Error: Configuration file '{config_path}' not found")
         sys.exit(1)
@@ -55,6 +55,14 @@ def main():
 
     if "tradeCount" in config:
         if not modify_constant('src/MarketDataGenerator.cpp', config["tradeCount"], 'DATA_COUNT'):
+            success = False
+            
+    if "maxHistory" in config:
+        if not modify_constant('src/StrategyEngine.cpp', config["maxHistory"], 'MAX_HISTORY'):
+            success = False       
+
+    if "minHistory" in config:
+        if not modify_constant('src/StrategyEngine.cpp', config["minHistory"], 'MIN_HISTORY'):
             success = False
 
     if success:
