@@ -2,7 +2,7 @@
 #define STRATEGYENGINE_H
 
 #include "pch.h"
-#include "TradingStrategy.h"
+#include "StrategyWrapper.h"
 
 class StrategyEngine
 {
@@ -13,12 +13,12 @@ private:
     std::condition_variable& actionSignalCV_;    
     std::mutex& marketDataMutex_;                
     std::mutex& actionSignalMutex_;                 
-    DoubleVector priceHistory_;         
-    TradingStrategy tradingStrategy_; 
+    std::deque<double> priceHistory_;         
     std::atomic<bool>  &systemRunningFlag_;
     std::atomic<bool>& systemBrokenFlag_;
     std::mutex& systemBrokenMutex_;
     std::condition_variable& systemBrokenCV_;
+    IStrategy*  strategy_;
 public:
     StrategyEngine() = delete;
     StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,

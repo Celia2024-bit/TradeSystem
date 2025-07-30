@@ -1,6 +1,9 @@
 #include "StrategyEngine.h"
 #include <iomanip>
 
+constexpr uint32_t MAX_HISTORY = 70;
+constexpr uint32_t MIN_HISTORY = 10; 
+
 StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,
                          std::condition_variable& marketDataCV, std::mutex& marketDataMutex,
                          std::condition_variable& actionSignalCV, std::mutex& actionSignalMutex,
@@ -13,13 +16,12 @@ StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<
       marketDataMutex_(marketDataMutex),
       actionSignalMutex_(actionSignalMutex),
       priceHistory_(),
-      tradingStrategy_(), 
       systemRunningFlag_(systemRunningFlag),
       systemBrokenFlag_(systemBrokenFlag),
       systemBrokenMutex_(systemBrokenMutex),
       systemBrokenCV_(systemBrokenCV) 
 {
-
+      StrategyWrapper::initialize();
 }
 
 void StrategyEngine::ProcessMarketDataAndGenerateSignals()
@@ -46,17 +48,17 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
                   << currentMarketData.price_ << std::endl;
 
         priceHistory_.push_back(currentMarketData.price_);
-        if (priceHistory_.size() > 10)
-        { 
-            priceHistory_.erase(priceHistory_.begin());
+        if (priceHistory_.size() > MAX_HISTORY)
+        {
+            priceHistory_.pop_front(); // Remove the oldest element efficiently
         }
 
         ActionType generatedActionType = ActionType::HOLD;
-        if (priceHistory_.size() >= 5)
+        if (priceHistory_.size() >= MIN_HISTORY)
         {
-            generatedActionType = tradingStrategy_.CalculateSimpleMovingAverageStrategy(priceHistory_);
+            generatedActionType = StrategyWrapper::runStrategy(priceHistory_);
         }
-
+        
         if (generatedActionType != ActionType::HOLD)
         {
             double defaultTradeAmount = 0.01; // Default trade amount
