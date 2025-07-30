@@ -1,0 +1,15 @@
+tradeTime: 150
+tradeCount: 6000
+
+maxHistory: 70
+minHistory: 10 
+
+selected_class:  SimpleMovingAverageStrategy 
+#BollingerBandsStrategy
+#MomentumRSIStrategy
+#SimpleMovingAverageStrategy
+
+obj_name:  simpleMovingAverage
+#bollingerBands
+#momentumRSI
+#simpleMovingAverage
