@@ -5,6 +5,7 @@ This document describes the automated code enhancement and validation tools that
 ## Overview
 
 The development tools system consists of three main components:
+
 - **Add_check_all.py**: Python script for automated code enhancement
 - **Config.yaml**: Configuration file specifying functions to enhance
 - **ParameterCheck.h**: Template-based parameter validation system
@@ -12,19 +13,23 @@ The development tools system consists of three main components:
 ## Add_check_all.py - Code Enhancement Tool
 
 ### Purpose
+
 Automatically adds parameter validation and error handling to existing C++ code without manual modification.
 
 ### Usage
+
 ```bash
 python Add_check_all.py <directory>
 ```
 
 **Example:**
+
 ```bash
 python Add_check_all.py /path/to/your/cpp/files
 ```
 
 ### Features
+
 - **Parameter Validation**: Automatically injects `check_all()` function calls
 - **Error Handling**: Wraps existing code with comprehensive try-catch blocks
 - **File Safety**: Creates backup files (`.bak`) before modification
@@ -32,17 +37,20 @@ python Add_check_all.py /path/to/your/cpp/files
 - **Logging Integration**: Automatic error logging to `error.log` and `parameter_check.log`
 
 ### Requirements
+
 - `Config.yaml` must be present in the target directory
 - Target files must be valid C++ source files
 - ParameterCheck.h must be included in the project
 
 ### Planned Features
+
 - **Recursive Processing**: `-R` flag for subdirectory traversal
 - **Include Support**: Config.yaml include mechanism for modular configuration
 
 ## Config.yaml - Configuration File
 
 ### Format
+
 ```yaml
 filename.cpp:
   - ReturnType ClassName::FunctionName(param1, param2, ...)
@@ -53,16 +61,18 @@ another_file.cpp:
 ```
 
 ### Example Configuration
+
 ```yaml
 TradeExecutor.cpp:
   - bool TradeExecutor::ExecuteBuyOrder(price, amount)
   - bool TradeExecutor::HandleActionSignal(action, price, amount)
-  
+
 TradingStrategy.cpp:
   - ActionType TradingStrategy::CalculateSimpleMovingAverageStrategy(priceHistory)
 ```
 
 ### Important Notes
+
 - **Parameter Values**: List parameter names/values, not types
 - **Function Signatures**: Must match exactly with actual function declarations
 - **File Location**: Must be placed in the same directory as target files
@@ -71,6 +81,7 @@ TradingStrategy.cpp:
 ## ParameterCheck.h - Validation System
 
 ### Template-based Validation
+
 The system uses C++17 `constexpr if` to provide compile-time type-safe validation:
 
 ```cpp
@@ -85,11 +96,13 @@ bool check_all(const std::string& functionName, Args&&... args)
 ### Supported Types
 
 #### Basic Types
+
 - **Integral Types** (`int`, `long`, `size_t`, etc.): Validates `value > 0`
 - **Floating Point** (`float`, `double`): Validates `std::isfinite(value)`
 - **Pointers**: Validates `value != nullptr`
 
 #### Custom Types
+
 - **ActionType** (enum): Validates against `BUY`, `SELL`, `HOLD`
 - **IntRange**: Validates `value.x >= value.min && value.x <= value.max`
 - **TradeData**: Validates `price_ > 0.0 && timestamp_ms_ > 0`
@@ -98,6 +111,7 @@ bool check_all(const std::string& functionName, Args&&... args)
 - **TradeDataVector**: Validates `!value.empty()`
 
 ### Custom Type Definitions
+
 ```cpp
 enum class ActionType { BUY, SELL, HOLD };
 
@@ -122,6 +136,7 @@ struct IntRange {
 ## Code Transformation Examples
 
 ### Original Code
+
 ```cpp
 bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
 {
@@ -146,6 +161,7 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
 ```
 
 ### Enhanced Code
+
 ```cpp
 bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
 {
@@ -192,6 +208,7 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
 ## Workflow Integration
 
 ### Development Workflow
+
 1. **Write Core Logic**: Implement functions without validation/error handling
 2. **Configure Enhancement**: Add function signatures to `Config.yaml`
 3. **Run Enhancement**: Execute `python Add_check_all.py <directory>`
@@ -199,6 +216,7 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
 5. **Build & Test**: Compile and test the enhanced code
 
 ### File Management
+
 - **Original Files**: Automatically backed up as `.filename.bak`
 - **Enhanced Files**: Replace original files with safety additions
 - **Log Files**: 
@@ -206,6 +224,7 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
   - `error.log`: Runtime exception logs
 
 ### Benefits
+
 - **Reduced Boilerplate**: No manual validation code writing
 - **Consistency**: Uniform error handling across codebase
 - **Safety**: Comprehensive parameter validation
@@ -215,24 +234,31 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
 ## Error Handling Integration
 
 ### Parameter Validation Errors
+
 When invalid parameters are detected:
+
 ```
 Invalid parameters in TradeExecutor::ExecuteBuyOrder! See parameter_check.log for details
 ```
 
 ### Try Catch Errors(Exception)
+
 When invalid parameters are detected:
+
 ```
 Exception in TradeExecutor::ExecuteBuyOrder! See error.log for details.;
 ```
 
 ### Try Catch Errors(Unknown exception)
+
 When invalid parameters are detected:
+
 ```
 Unknown exception in TradeExecutor::ExecuteBuyOrder! See error.log for details.
 ```
 
 ### Runtime Exception Handling
+
 - **Standard Exceptions**: Logged with exception details
 - **Unknown Exceptions**: Caught and logged safely
 - **Function Context**: Error logs include class and function names
@@ -241,12 +267,14 @@ Unknown exception in TradeExecutor::ExecuteBuyOrder! See error.log for details.
 ## Testing
 
 ### Unit Tests
+
 - **ParameterCheck_Test.cpp**: Comprehensive validation testing
 - **Type Coverage**: Tests all supported parameter types
 - **Edge Cases**: Boundary value testing
 - **Error Scenarios**: Invalid parameter handling
 
 ### Integration Testing
+
 - **CI/CD Pipeline**: Automated testing in Docker environment
 - **Code Enhancement**: Verify Python script functionality
 - **Build Verification**: Ensure enhanced code compiles correctly
