@@ -12,7 +12,8 @@ def run_script(path, interpreter=None, args=None):
 
 def main():
     subprocess.run("rm -rf src/*.cpp.bak", shell=True, check=True)
-    run_script("utilLocal/UserDefineTradeTimeCountYmalFile.py", interpreter="python3")
+    run_script("utilLocal/GenerateStrategy/generate_code.py", interpreter="python3")
+    run_script("utilLocal/UserDefineYmalFile.py", interpreter="python3")
     run_script("utilLocal/CppLogInjector.py", interpreter="python3")  # Assumes it's a compiled binary or shell script
     run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])
 
