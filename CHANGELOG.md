@@ -6,10 +6,40 @@ All notable changes to this project will be documented in this file.
 
 ### Planned
 
-- Add configurable test data volume and duration (currently hardcoded) ；done
 - Implement recursive directory processing for Add_check_all.py (-R flag)
-- Move Config.yaml to utils/ directory :done
 - Add include support for Config.yaml to support subdirectory configurations
+
+## [2025-07-30] - Enhanced Strategy Management & Data Handling
+
+### Added
+
+- **Multiple Trading Strategies**:
+  - Introduced two new trading strategies, bringing the total to three.
+  - Comprehensive test code has been added for all three strategies to ensure correctness.
+- **Configurable Strategy Selection**:
+  - Users can now select desired trading strategies via the `config/config.yaml` file.
+  - A new Python script automatically generates the `StrategyWrapper` class based on user configuration.
+  - This generation dynamically updates `StrategyWrapper.cpp` and `StrategyWrapper.h` to instantiate only the selected strategies.
+  - **Optimized Compilation**: The build system (Makefile) is automatically updated via `extra_sources.mk` to compile only the C++ files for the configured strategies, significantly reducing build times and image size.
+- **Improved Price History Management (Sliding Window)**:
+  - Implemented a more efficient sliding window mechanism for historical price data.
+  - Users can now define `MAX_HISTORY` and `MIN_HISTORY` parameters in `config/config.yaml`.
+  - When `MAX_HISTORY` is reached, new data points replace the oldest, ensuring a fixed-size window and improving strategy accuracy.
+  - Transitioned from `std::vector` to `std::deque` for `priceHistory` in `StrategyEngine.cpp` to optimize front-element removal (O(1) complexity), enhancing performance.
+- **Default Generated Files**:
+  - `StrategyWrapper.cpp` and `StrategyWrapper.h` now include default implementations, allowing the project to build and run even if the strategy configuration script hasn't been executed.
+  - `extra_sources.mk` is also automatically generated or defaulted.
+- **Docker Enhancements**:
+  - Updated `Dockerfile` to version 1.2.
+  - Added `pip3 install jinja2` to the Docker build process.
+- **Jinja2 Integration**:
+  - Utilized Jinja2 templating for automated generation of `StrategyWrapper.cpp` and `StrategyWrapper.h`, improving code maintainability and dynamic adaptability.
+
+### Changed
+
+- **Configuration File Location**: `config/TradeTimeCount.yaml` is now `config/config.yaml`.
+- **`MAX_HISTORY` & `MIN_HISTORY` Management**: Moved from hardcoded `constexpr` values in `src/StrategyEngine.cpp` to configurable parameters in `config/config.yaml`.
+- **Price History Data Structure**: `priceHistory_` in `StrategyEngine` and `calculateAction` parameters in `IStrategy` and derived strategy classes now use `std::deque` instead of `std::vector` for improved performance on sliding window operations.
 
 ## [2025-07-12] - Enhanced Automation and Stress Testing
 
@@ -273,7 +303,7 @@ Week 3 (Jul 9): Security & organization
 ├── CI/CD authentication setup
 └── Project structure optimization
 
-Week 3.5 (Today): Advanced Logging System Implementation
+Week 3.5 (Jul 12 ): Advanced Logging System Implementation
 ├── Singleton Logger pattern with thread safety
 ├── Custom log level mapping system
 ├── Multiple filtering modes (minimum, exact, exclusion)
@@ -281,4 +311,13 @@ Week 3.5 (Today): Advanced Logging System Implementation
 ├── Custom formatter support with lambda functions
 ├── Modern C++ practices (constexpr, mutable mutex)
 ├── Comprehensive test suite with real-world scenarios
+
+Week 4 (Jul 30): Enhanced Strategy Management & Data Handling
+├── Multiple trading strategies and test code
+├── Configurable strategy selection via config.yaml with auto-generation of StrategyWrapper
+├── Optimized compilation for selected strategies via extra_sources.mk
+├── Efficient sliding window for price history using std::deque
+├── User-defined MAX_HISTORY and MIN_HISTORY
+├── Default generated files for out-of-the-box build
+├── Docker v1.2 updates and Jinja2 integration for template-based generation
 ```
