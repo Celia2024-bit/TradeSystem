@@ -5,7 +5,7 @@ stages:
 
 # Assume the Dockerfile version is passed as a CI/CD variable or hardcoded
 variables:
-  DOCKERFILE_VERSION: "v1.1"
+  DOCKERFILE_VERSION: "v1.2"
   GIT_SUBMODULE_STRATEGY: recursive
  # GIT_SUBMODULE_UPDATE_FLAGS: --remote
   GIT_SUBMODULE_DEPTH: 1
