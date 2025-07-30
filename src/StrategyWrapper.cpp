@@ -1,0 +1,42 @@
+// Auto-generated strategy wrapper implementation
+#include "StrategyWrapper.h"
+#include <iostream>
+
+IStrategy* StrategyWrapper::strategy_ = nullptr;
+
+void StrategyWrapper::initialize() 
+{
+    if (!strategy_) {
+        static SimpleMovingAverageStrategy simpleMovingAverage;
+        strategy_ = &simpleMovingAverage;
+    }
+}
+
+void StrategyWrapper::cleanup() 
+{
+    strategy_ = nullptr;
+}
+
+ActionType StrategyWrapper::runStrategy(const DoubleDeque& priceHistory) 
+{
+    if (!strategy_) {
+        std::cerr << "Strategy is not initialized!" << std::endl;
+        return ActionType::HOLD; // or handle error as needed
+    }
+
+    ActionType action = strategy_->calculateAction(priceHistory);
+
+    switch (action) {
+        case ActionType::BUY:
+            std::cout << "BUY" << std::endl;
+            break;
+        case ActionType::SELL:
+            std::cout << "SELL" << std::endl;
+            break;
+        case ActionType::HOLD:
+            std::cout << "HOLD" << std::endl;
+            break;
+    }
+
+    return action;
+}
