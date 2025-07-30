@@ -1,16 +1,36 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <chrono>
+#include "pch.h"
+#include <atomic>              // For std::atomic (e.g., systemRunningFlag, systemBrokenFlag)
+#include <chrono>              // For std::chrono (e.g., sleep_for, seconds)
+#include <mutex>               // For std::mutex (for protecting shared data)
+#include <condition_variable>  // For std::condition_variable (for thread synchronization)
+#include <thread>
+#include <string>
 #include <vector>
-
+#include <deque>
 
 enum class ActionType
 {
     BUY,
     SELL,
-    HOLD
+    HOLD,
 };
+
+// Helper function to convert Action enum to string for better readability
+inline std::string actionTypeToString(ActionType action) {
+    switch (action) {
+        case ActionType::BUY:
+            return "Buy";
+        case ActionType::SELL:
+            return "Sell";
+        case ActionType::HOLD:
+            return "Hold";
+        default:
+            return "Unknown";
+    }
+}
 
 enum class SymbolType
 {
@@ -51,6 +71,7 @@ struct ActionSignal
 
 using DoubleVector = std::vector<double>;
 using TradeDataVector = std::vector<TradeData>;
+using DoubleDeque = std::deque<double>;
 
 
 
