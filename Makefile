@@ -1,3 +1,5 @@
+include extra_sources.mk
+
 # Compiler to use
 CXX = g++
 
@@ -24,15 +26,22 @@ SRCS = src/main.cpp \
        src/MarketDataGenerator.cpp \
        src/TradeExecutor.cpp \
        src/StrategyEngine.cpp \
-       src/TradingStrategy.cpp \
-       util/Logger.cpp
+       src/StrategyWrapper.cpp \
+       util/Logger.cpp \
+       $(EXTRA_SRCS)
 
 # Generate a list of object files (.o) from the source files
 # The patsubst function now correctly replaces src/%.cpp with $(OUTPUT_DIR)/%.o
 OBJS = $(patsubst src/%.cpp,$(OUTPUT_DIR)/%.o,$(SRCS))
 
+# Create all necessary subdirectories under output/
+prepare_dirs:
+	@mkdir -p $(addprefix $(OUTPUT_DIR)/, \
+        TradeStrategy \
+        util)
+
 # Default target: build all
-all: $(OUTPUT_DIR) $(TARGET)
+all: $(OUTPUT_DIR) prepare_dirs  $(TARGET)
 
 # Rule to create the output directory if it doesn't exist
 $(OUTPUT_DIR):
@@ -52,6 +61,7 @@ $(TARGET): $(OBJS)
 $(OUTPUT_DIR)/%.o: src/%.cpp $(OUTPUT_DIR) # Ensure output directory exists before compiling
 	@echo "Compiling $<..."
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 
 # Example for a specific test compilation (assuming this file is still in a subfolder like Util/Test)
 # If ParameterCheck_Test.cpp is also moved to src, this rule would need adjustment.
