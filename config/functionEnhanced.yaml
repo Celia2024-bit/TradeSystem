@@ -2,5 +2,6 @@ TradeExecutor.cpp:
   - bool TradeExecutor::HandleActionSignal(action, price, amount)
   - void TradeExecutor::DisplayPortfolioStatus(currentPrice)
   
-TradingStrategy.cpp:
-   - ActionType TradingStrategy::CalculateSimpleMovingAverageStrategy(priceHistory)
+TradeStrategy\BollingerBandsStrategy.cpp:
+  - double BollingerBandsStrategy::calculateStandardDeviation(prices, period)
+  
