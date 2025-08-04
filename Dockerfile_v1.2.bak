@@ -1,0 +1,41 @@
+# Use a lightweight Ubuntu base image
+FROM ubuntu:22.04
+
+# Set environment variables to prevent interactive prompts during apt installs
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary packages:
+# git: for cloning repositories
+# build-essential: includes g++ and make for C/C++ compilation
+# ca-certificates: SSL certificates for HTTPS connections
+# python3: Python 3 interpreter
+# python3-pip: Python package manager
+RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
+    ca-certificates \
+    python3 \
+    python3-pip && \
+    pip3 install pyyaml && \
+    pip3 install jinja2 && \
+    pip3 install websockets && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Verify installations
+RUN git --version && \
+    g++ --version && \
+    make --version && \
+    python3 --version && \
+    pip3 --version && \
+    python3 -c "import yaml; print('PyYAML version:', yaml.__version__)"
+
+# Set the working directory for subsequent instructions.
+# GitLab CI will clone your repository into its own working directory,
+# so this WORKDIR is primarily for any manual commands you might run inside the container.
+# The actual build will happen in CI_PROJECT_DIR.
+WORKDIR /app
+
+# Default command if running the container directly (optional)
+# CMD ["bash"]
