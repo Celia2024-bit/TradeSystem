@@ -1,9 +1,9 @@
 [submodule "Test"]
 	path = Test
-	url = https://gitlab.com/celia_2025-group/test.git
+	url = https://github.com/Celia2024-bit/test.git
 [submodule "tools"]
 	path = tools
-	url = https://gitlab.com/celia_2025-group/tools.git
+	url = https://github.com/Celia2024-bit/tools.git
 [submodule "util"]
 	path = util
-	url = https://gitlab.com/celia_2025-group/util.git
+	url = https://github.com/Celia2024-bit/util.git
