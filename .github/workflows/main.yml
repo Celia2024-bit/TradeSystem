@@ -1,0 +1,97 @@
+# .github/workflows/main.yml
+name: CI/CD Pipeline
+
+# This workflow is triggered on pushes and pull requests to branches, as well as manually via the web UI.
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+# Define environment variables accessible to all jobs
+env:
+  DOCKERFILE_VERSION: "v1.2"
+  # This is the GitHub Container Registry. You may need to change this if you use a different registry.
+  REGISTRY: ghcr.io
+
+jobs:
+  # Job to build and push the custom Docker image
+  build_image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    
+    # Configure Git to checkout the repository and its submodules
+    steps:
+      - name: Checkout Repository and Submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          # This token is needed to access private submodules, if any.
+          # For a public repository, you may not need to specify this.
+          token: ${{ secrets.PAT_TOKEN }}
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile_${{ env.DOCKERFILE_VERSION }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ github.repository }}:latest
+          # Enable cache to speed up subsequent builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Build and test job using the custom Docker image
+  build_and_test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    needs: [build_image]
+    
+    # Use the custom Docker image built in the previous job
+    container: ${{ env.REGISTRY }}/${{ github.repository }}:latest
+    
+    steps:
+      - name: Checkout Repository
+        # You need to check out the code again in this job
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Run trade system and capture output
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          pwd
+          ls -la util/
+          ls -la tools/
+          echo "Running trading_system and saving output to result.txt..."
+          python RunTradeSystem.py
+          ./output/trading_system > result.txt
+          echo "=== Content of result.txt ==="
+          cat result.txt
+          echo "========================="
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-and-test-artifacts
+          path: |
+            result.txt
+            parameter_check.log
+            error.log
+          retention-days: 7
