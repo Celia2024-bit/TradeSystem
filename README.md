@@ -69,6 +69,7 @@ A high-performance multi-threaded Crypto trading simulation system built with C+
 
 ```bash
 # Run the entire trading system with logging and build steps automated
+set PYTHONIOENCODING=utf-8
 python RunTradeSystem.py
 ```
 
