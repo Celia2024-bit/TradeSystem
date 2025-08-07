@@ -47,39 +47,44 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
         LOG(Strategy) << " Received price: $" << std::fixed << std::setprecision(2)
                   << currentMarketData.price_ << std::endl;
 
-        priceHistory_.push_back(currentMarketData.price_);
-        if (priceHistory_.size() > MAX_HISTORY)
-        {
-            priceHistory_.pop_front(); // Remove the oldest element efficiently
-        }
-
-        ActionType generatedActionType = ActionType::HOLD;
-        if (priceHistory_.size() >= MIN_HISTORY)
-        {
-            generatedActionType = StrategyWrapper::runStrategy(priceHistory_);
-        }
-        
-        if (generatedActionType != ActionType::HOLD)
-        {
-            double defaultTradeAmount = 0.01; // Default trade amount
-            ActionSignal generatedActionSignal(generatedActionType, currentMarketData.price_, defaultTradeAmount);
-
-            {
-                std::lock_guard<std::mutex> lock(actionSignalMutex_);
-                actionSignalQueue_.enqueue(generatedActionSignal); 
-                actionSignalCV_.notify_one();
-                LOG(Strategy) << " Generated signal: "
-                          << (generatedActionType == ActionType::BUY ? "BUY" : "SELL")
-                          << " at price $" << std::fixed << std::setprecision(2)
-                          << currentMarketData.price_ << std::endl;
-            }
-        }
-        else
-        {
-            LOG(Strategy) << "No signal (HOLD)." ;
-        }
-
+        HandlePrice(currentMarketData.price_);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
     LOG(Strategy) << "Data processing stopped." ;
+}
+
+
+void StrategyEngine::HandlePrice(double price)
+{
+    priceHistory_.push_back(price);
+    if (priceHistory_.size() > MAX_HISTORY)
+    {
+        priceHistory_.pop_front(); // Remove the oldest element efficiently
+    }
+
+    ActionType generatedActionType = ActionType::HOLD;
+    if (priceHistory_.size() >= MIN_HISTORY)
+    {
+        generatedActionType = StrategyWrapper::runStrategy(priceHistory_);
+    }
+
+    if (generatedActionType != ActionType::HOLD)
+    {
+        double defaultTradeAmount = 0.01; // Default trade amount
+        ActionSignal generatedActionSignal(generatedActionType, price, defaultTradeAmount);
+
+        {
+            std::lock_guard<std::mutex> lock(actionSignalMutex_);
+            actionSignalQueue_.enqueue(generatedActionSignal); 
+            actionSignalCV_.notify_one();
+            LOG(Strategy) << " Generated signal: "
+                      << (generatedActionType == ActionType::BUY ? "BUY" : "SELL")
+                      << " at price $" << std::fixed << std::setprecision(2)
+                      << price << std::endl;
+        }
+    }
+    else
+    {
+        LOG(Strategy) << "No signal (HOLD)." ;
+    }
 }

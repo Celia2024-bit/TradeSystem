@@ -19,6 +19,7 @@ private:
     std::mutex& systemBrokenMutex_;
     std::condition_variable& systemBrokenCV_;
     IStrategy*  strategy_;
+    void HandlePrice(double price);
 public:
     StrategyEngine() = delete;
     StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,
