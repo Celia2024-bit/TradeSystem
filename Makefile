@@ -3,6 +3,16 @@ include extra_sources.mk
 # Compiler to use
 CXX = g++
 
+# Detect platform
+UNAME_S := $(shell uname -s)
+
+# Windows-specific linker flags (Git Bash / MinGW)
+ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
+    PLATFORM_LIBS = -lws2_32
+else
+    PLATFORM_LIBS =
+endif
+
 # Compiler flags
 # -std=c++17: Use the C++17 standard
 # -Wall -Wextra: Enable all common and extra warnings
@@ -41,12 +51,17 @@ prepare_dirs:
         util)
 
 # Default target: build all
-all: $(OUTPUT_DIR) prepare_dirs  $(TARGET)
+all: $(OUTPUT_DIR) prepare_dirs platform_info  $(TARGET)
 
 # Rule to create the output directory if it doesn't exist
 $(OUTPUT_DIR):
 	@mkdir -p $(OUTPUT_DIR)
 	@echo "Created output directory: $(OUTPUT_DIR)"
+
+# Print platform info
+platform_info:
+    @echo "Detected platform: $(UNAME_S)"
+    @echo "Linker flags: $(PLATFORM_LIBS)"
 
 # Rule to link the object files into the executable
 $(TARGET): $(OBJS)
@@ -60,7 +75,7 @@ $(TARGET): $(OBJS)
 # -c (or --compile) means "compile and assemble, but do not link."
 $(OUTPUT_DIR)/%.o: src/%.cpp $(OUTPUT_DIR) # Ensure output directory exists before compiling
 	@echo "Compiling $<..."
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(PLATFORM_LIBS) -c $< -o $@
 
 
 # Example for a specific test compilation (assuming this file is still in a subfolder like Util/Test)

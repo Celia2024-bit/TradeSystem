@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip && \
     pip3 install pyyaml && \
     pip3 install jinja2 && \
+    pip3 install requests &&\
     rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
