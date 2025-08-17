@@ -83,8 +83,11 @@ utilLocal/CppLogInjector.py
 tools/Add_check_all.p
 # Build
 make all
-# Run
+# Run  
+# Terminal 1: Start the trading system (keep running)
 ./output/trading_system.exe
+# Terminal 2: Start market data fetcher (run after trading system is up)
+python3 src/MarketFetch.py
 ```
 
 - Results will be saved to result.txt
