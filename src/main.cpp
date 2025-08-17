@@ -3,12 +3,10 @@
 #include <memory>
 
 // Include necessary custom headers for the trading system components
-#include "MarketDataGenerator.h" // Renamed from MarketData.h
 #include "StrategyEngine.h"      // Renamed from DataReceive.h
 #include "TradeExecutor.h"
 
 // Forward declarations of thread functions.
-void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator);
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
 void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 
@@ -51,9 +49,6 @@ int main()
     std::condition_variable systemBrokenCV;
 
     // --- 3. Component Initialization: Creating shared_ptr instances ---
-    std::shared_ptr<MarketDataGenerator> marketDataGenerator =
-        std::make_shared<MarketDataGenerator>(marketDataQueue, marketDataCV, marketDataMutex,
-                                              systemRunningFlag, systemBrokenFlag, systemBrokenMutex, systemBrokenCV);
 
     std::shared_ptr<StrategyEngine> strategyEngine =
         std::make_shared<StrategyEngine>(marketDataQueue, actionSignalQueue, marketDataCV,
@@ -66,7 +61,6 @@ int main()
                                         systemRunningFlag, systemBrokenFlag, systemBrokenMutex, systemBrokenCV); // Added broken system flags
 
     // --- 4. Thread Creation: Launching worker threads ---
-    std::thread market_data_generator_thread(market_data_generator_thread_func, marketDataGenerator);
     std::thread strategy_engine_thread(strategy_engine_thread_func, strategyEngine);
     std::thread trade_execution_thread(trade_execution_thread_func, tradeExecutor);
 
@@ -87,7 +81,7 @@ int main()
     LOG(Main) << "Signaling threads to shut down..." ;
 
     // --- 7. Joining Threads: Waiting for all worker threads to complete ---
-    market_data_generator_thread.join();
+
     strategy_engine_thread.join();
     trade_execution_thread.join();
 
@@ -106,11 +100,6 @@ int main()
     return 0;
 }
 
-// --- Wrapper Functions for Threads ---
-void market_data_generator_thread_func(std::shared_ptr<MarketDataGenerator> marketDataGenerator)
-{
-    marketDataGenerator->GenerateMarketData();
-}
 
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine)
 {

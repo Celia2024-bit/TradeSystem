@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "StrategyWrapper.h"
+#include "json.hpp"
 
 class StrategyEngine
 {
@@ -20,6 +21,8 @@ private:
     std::condition_variable& systemBrokenCV_;
     IStrategy*  strategy_;
     void HandlePrice(double price);
+    bool InitSocket();
+    void HandleMessage(const std::string& jsonStr, TradeData& currentMarketData);
 public:
     StrategyEngine() = delete;
     StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,

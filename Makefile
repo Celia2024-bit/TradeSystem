@@ -33,7 +33,6 @@ TARGET = $(OUTPUT_DIR)/$(TARGET_NAME)
 # List of all source files (.cpp)
 # Prepend 'src/' to each source file name
 SRCS = src/main.cpp \
-       src/MarketDataGenerator.cpp \
        src/TradeExecutor.cpp \
        src/StrategyEngine.cpp \
        src/StrategyWrapper.cpp \
@@ -51,22 +50,17 @@ prepare_dirs:
         util)
 
 # Default target: build all
-all: $(OUTPUT_DIR) prepare_dirs platform_info  $(TARGET)
+all: $(OUTPUT_DIR) prepare_dirs  $(TARGET)
 
 # Rule to create the output directory if it doesn't exist
 $(OUTPUT_DIR):
 	@mkdir -p $(OUTPUT_DIR)
 	@echo "Created output directory: $(OUTPUT_DIR)"
 
-# Print platform info
-platform_info:
-    @echo "Detected platform: $(UNAME_S)"
-    @echo "Linker flags: $(PLATFORM_LIBS)"
-
 # Rule to link the object files into the executable
 $(TARGET): $(OBJS)
 	@echo "Linking $(TARGET)..."
-	$(CXX) $(OBJS) -o $(TARGET) $(CXXFLAGS)
+	$(CXX) $(OBJS) -o $(TARGET) $(CXXFLAGS) $(PLATFORM_LIBS)
 	@echo "Build successful! Executable: $(TARGET)"
 
 # Generic rule to compile .cpp files into .o files within the output directory
