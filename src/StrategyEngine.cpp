@@ -15,6 +15,7 @@ using json = nlohmann::json;
     #define SOCKET int
     #define CLOSESOCKET close
     #define SOCKET_CLEANUP()
+    #define INVALID_SOCKET (-1)
 #endif
 
 StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,
