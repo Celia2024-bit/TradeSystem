@@ -52,10 +52,6 @@ def main():
     if "tradeTime" in config:
         if not modify_constant('src/main.cpp', config["tradeTime"], 'WAIT_SECONDS'):
             success = False
-
-    if "tradeCount" in config:
-        if not modify_constant('src/MarketDataGenerator.cpp', config["tradeCount"], 'DATA_COUNT'):
-            success = False
             
     if "maxHistory" in config:
         if not modify_constant('src/StrategyEngine.cpp', config["maxHistory"], 'MAX_HISTORY'):
