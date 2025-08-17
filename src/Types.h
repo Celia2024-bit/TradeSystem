@@ -42,6 +42,7 @@ struct TradeData
 {
     double price_;
     long long timestamp_ms_;
+    std::string symbol_;
 
     TradeData(double price) : price_(price)
     {
