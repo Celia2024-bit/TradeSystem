@@ -44,7 +44,8 @@ def modify_python_variable(file_path, new_value, variable_name):
         print(f"Error: File {file_path} not found")
         return False
     try:
-        with open(file_path, 'r') as file:
+        # Explicitly specify UTF-8 encoding
+        with open(file_path, 'r', encoding='utf-8') as file:
             lines = file.readlines()
 
         modified = False
@@ -64,7 +65,8 @@ def modify_python_variable(file_path, new_value, variable_name):
             print(f"⚠️ Warning: {variable_name} not found in {file_path}")
             return False
 
-        with open(file_path, 'w') as file:
+        # Explicitly specify UTF-8 encoding for writing
+        with open(file_path, 'w', encoding='utf-8') as file:
             file.writelines(lines)
 
         return True
