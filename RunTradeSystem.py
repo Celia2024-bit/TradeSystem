@@ -36,8 +36,8 @@ def main():
    subprocess.run("rm -rf src/TradeStrategy/*.cpp.bak", shell=True, check=True)
    run_script("utilLocal/GenerateStrategy/generate_code.py", interpreter="python3")
    run_script("utilLocal/UserDefineYmalFile.py", interpreter="python3")
-   run_script("utilLocal/CppLogInjector.py", interpreter="python3")
-   run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])
+   #run_script("utilLocal/CppLogInjector.py", interpreter="python3")
+   #run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])
 
    try:
         subprocess.run(["make", "clean"], check=True)
@@ -56,28 +56,37 @@ def main():
             stderr=subprocess.STDOUT
         )
 
-    # Wait for server to start listening
-   time.sleep(3)
-
     # Start MarketFetch.py (as client)
    safe_print("🚀 Starting MarketFetch.py as client...")
    market_fetch_process = subprocess.Popen(["python3", "src/MarketFetch.py"])
 
+    # Wait for both processes to complete with a timeout
+   TIMEOUT_SECONDS = 42 # A few seconds longer than the main.cppp wait
+   start_time = time.time()
+   while time.time() - start_time < TIMEOUT_SECONDS:
+       if trading_process.poll() is not None and market_fetch_process.poll() is not None:
+           break
+       time.sleep(1)
+       
+   # Terminate any remaining processes
+   safe_print("🛑 Terminating processes after timeout...")
+   if trading_process.poll() is None:
+       trading_process.terminate()
+   if market_fetch_process.poll() is None:
+       market_fetch_process.terminate()
+       
    try:
-        # Wait for trading_system to finish
-        safe_print("▶️ Waiting for trading_system to complete...")
-        trading_process.wait()
+        trading_process.wait(timeout=5)
         safe_print("✅ trading_system completed, output saved to result.txt")
-   except Exception as e:
-        safe_print(f"❌ Error with trading_system: {e}")
-   finally:
-        # Terminate the background process when the trading system finishes
-        safe_print("🛑 Terminating MarketFetch.py process...")
-        market_fetch_process.terminate()
-        try:
-            market_fetch_process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            market_fetch_process.kill()
+   except subprocess.TimeoutExpired:
+        trading_process.kill()
+        safe_print("❌ trading_system did not terminate gracefully. Killed.")
+   
+   try:
+        market_fetch_process.wait(timeout=5)
+   except subprocess.TimeoutExpired:
+        market_fetch_process.kill()
+        safe_print("❌ MarketFetch.py did not terminate gracefully. Killed.")
 
 if __name__ == "__main__":
     main()
