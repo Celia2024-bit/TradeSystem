@@ -38,6 +38,40 @@ def modify_constant(file_path, new_value, constant_name):
         print(f"❌ Error modifying {file_path}: {e}")
         return False
 
+def modify_python_variable(file_path, new_value, variable_name):
+    """ Modifies a variable in a Python file. """
+    if not os.path.exists(file_path):
+        print(f"Error: File {file_path} not found")
+        return False
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        modified = False
+        for i in range(len(lines)):
+            pattern = rf'^\s*{variable_name}\s*=\s*\d+'
+            if re.search(pattern, lines[i]):
+                lines[i] = re.sub(
+                    rf'({variable_name}\s*=\s*)\d+',
+                    f'\\g<1>{new_value}',
+                    lines[i]
+                )
+                modified = True
+                print(f"✅ Modified {variable_name} to {new_value} in {file_path}")
+                break
+
+        if not modified:
+            print(f"⚠️ Warning: {variable_name} not found in {file_path}")
+            return False
+
+        with open(file_path, 'w') as file:
+            file.writelines(lines)
+
+        return True
+    except Exception as e:
+        print(f"❌ Error modifying {file_path}: {e}")
+        return False
+
 def main():
     config_path = "config/config.yaml"
     if not os.path.exists(config_path):
@@ -51,6 +85,9 @@ def main():
 
     if "tradeTime" in config:
         if not modify_constant('src/main.cpp', config["tradeTime"], 'WAIT_SECONDS'):
+            success = False
+        timeout_value = config["tradeTime"] + 2
+        if not modify_python_variable('RunTradeSystem.py', timeout_value, 'TIMEOUT_SECONDS'):
             success = False
             
     if "maxHistory" in config:
