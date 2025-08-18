@@ -90,11 +90,6 @@ jobs:
         run: |
           echo "Running trading_system and saving output to result.txt..."
           python3 RunTradeSystem.py
-
-      - name: Run trading_system
-        run: |
-          ls -la output/
-          ./output/trading_system > $GITHUB_WORKSPACE/result.txt
       
       - name: Upload artifacts
         if: always()
