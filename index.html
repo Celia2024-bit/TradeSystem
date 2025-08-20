@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>  
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Trading System - Interactive Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Slate Gray with Sky Blue Accent -->
+    <!-- Application Structure Plan: A dashboard-style single-page application with a fixed left-hand sidebar for navigation and a main content area. This structure was chosen to allow users, particularly developers, to quickly jump to specific sections like 'Architecture' or 'Configuration' without needing to scroll through a long document. The content is thematically grouped into sections (Overview, Quick Start, Architecture, etc.) which is more intuitive for exploration than the original report's linear table of contents. User flow begins at a high-level overview, with clear pathways to dive deeper into setup, technical details, or customization. -->
+    <!-- Visualization & Content Choices: The primary goal is to organize and present technical text and code. Report Info: System Architecture Diagram -> Goal: Organize/Visualize -> Viz/Presentation Method: HTML/CSS Diagram using Tailwind's flexbox and borders -> Interaction: Static visualization for clarity -> Justification: Replaces the original report's text-based diagram with a clean, scalable, and stylistically consistent visual that is built directly into the page, avoiding external images or complex libraries. Report Info: Code blocks for commands and configuration -> Goal: Inform/Usability -> Presentation Method: Styled `<pre>` and `<code>` blocks -> Interaction: A 'Copy' button for each block -> Justification: Improves the developer experience by making it trivial to copy commands or configuration snippets. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .fira-code {
+            font-family: 'Fira Code', monospace;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link.active {
+            background-color: #0284c7; /* sky-600 */
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .nav-link:not(.active):hover {
+            background-color: #f1f5f9; /* slate-100 */
+            transform: translateX(2px);
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .diagram-box {
+            border: 1px solid #cbd5e1; /* slate-300 */
+            background-color: white;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.875rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        .diagram-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b; /* slate-500 */
+            font-weight: bold;
+            position: relative;
+        }
+         .diagram-arrow-line::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #94a3b8; /* slate-400 */
+            z-index: -1;
+        }
+        .diagram-arrow-line-vertical::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #94a3b8; /* slate-400 */
+            z-index: -1;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #475569;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+        }
+        pre:hover .copy-btn {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-white border-r border-slate-200 p-4 fixed h-full hidden md:block">
+            <h1 class="text-xl font-bold text-slate-800 mb-6">Crypto Trading System</h1>
+            <nav id="sidebar-nav" class="flex flex-col space-y-2">
+                <a href="#overview" class="nav-link flex items-center space-x-3 p-2 rounded-lg font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
+                    <span>Overview</span>
+                </a>
+                <a href="#quick-start" class="nav-link flex items-center space-x-3 p-2 rounded-lg font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" /></svg>
+                    <span>Quick Start</span>
+                </a>
+                <a href="#architecture" class="nav-link flex items-center space-x-3 p-2 rounded-lg font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    <span>Architecture</span>
+                </a>
+                <a href="#core-components" class="nav-link flex items-center space-x-3 p-2 rounded-lg font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01-.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" /></svg>
+                    <span>Core Components</span>
+                </a>
+                <a href="#CI/CD" class="nav-link flex items-center space-x-3 p-2 rounded-lg font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414L7.586 9H4a1 1 0 000 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" /></svg>
+                    <span>CI/CD</span>
+                </a>
+                <a href="#dev-tools" class="nav-link flex items-center space-x-3 p-2 rounded-lg font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 01-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    <span>Enhancement Tools</span>
+                </a>
+                <a href="#performance" class="nav-link flex items-center space-x-3 p-2 rounded-lg font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" /></svg>
+                    <span>Performance</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 md:ml-64 p-6 md:p-10">
+            <div id="mobile-nav" class="md:hidden mb-6">
+                 <select id="mobile-nav-select" class="w-full p-2 border border-slate-300 rounded-lg bg-white">
+                    <option value="overview">Overview</option>
+                    <option value="quick-start">Quick Start</option>
+                    <option value="architecture">Architecture</option>
+                    <option value="core-components">Core Components</option>
+                    <option value="dev-tools">Dev Tools</option>
+                    <option value="configuration">Configuration</option>
+                    <option value="performance">Performance</option>
+                </select>
+            </div>
+
+            <!-- Overview Section -->
+            <section id="overview" class="content-section space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Project Overview</h2>
+                    <p class="text-lg text-slate-600">This section provides a high-level summary of the Crypto Trading System, its mission, and its core capabilities. It's the perfect starting point to understand the project's goals and scope.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-3">Mission Statement</h3>
+                    <p class="text-slate-700">The Crypto Trading System is a high-performance, multi-threaded cryptocurrency trading simulation platform built with modern C++ and Python integration. It demonstrates advanced software engineering practices including real-time data processing, automated code generation, comprehensive parameter validation, and sophisticated development tooling.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-3">Key Features</h3>
+                    <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                        <li><strong>Multi-threaded Architecture</strong>: 3 dedicated threads for market data, trading logic, and execution.</li>
+                        <li><strong>Real-Time Data</strong>: Live Bitcoin market data from Binance API with fallback simulation.</li>
+                        <li><strong>Thread-safe Communication</strong>: Hybrid architecture with socket-based and internal queue-based communication.</li>
+                        <li><strong>Dynamic Strategy Management</strong>: Configurable trading strategies with automated code generation.</li>
+                        <li><strong>One-command Execution</strong>: Complete automation from development to production via a single script.</li>
+                        <li><strong>Modern C++</strong>: Utilizes C++17 features for maximum type safety and performance.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-3">System Specifications</h3>
+                    <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                        <li><strong>Runtime</strong>: Configurable trading duration (default: 30 seconds via config.yaml)</li>
+                        <li><strong>Data Processing</strong>: Real-time Bitcoin price updates from Binance with CSV logging</li>
+                        <li><strong>Trading Strategies</strong>: Multiple algorithms (SMA, Bollinger Bands, Momentum RSI)</li>
+                        <li><strong>Portfolio Management</strong>: Real-time P&L tracking and portfolio analytics</li>
+                        <li><strong>Error Handling</strong>: Multi-layered validation with parameter checking and exception logging</li>
+                        <li><strong>Logging</strong>: Custom logging with detailed execution tracing</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Quick Start Section -->
+            <section id="quick-start" class="content-section space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Quick Start Guide</h2>
+                    <p class="text-lg text-slate-600">Follow these steps to get the Crypto Trading System up and running. This guide covers prerequisites and the automated deployment process for a seamless setup.</p>
+                </div>
+
+   
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-4">Prerequisites</h3>
+                    <p class="mb-4 text-slate-700">Ensure you have the following software installed on your system (Windows or Linux).</p>
+                    <div class="relative">
+                        <pre class="language-bash"><button class="copy-btn">Copy</button><code style="font-size: 0.8em;"># Core Requirements
+- C++ compiler with C++17 support
+- Python 3.x
+- python3-pip
+- Make
+
+# Python Dependencies
+pip3 install jinja2 pyyaml requests</code></pre>
+                    </div>
+                </div>
+    
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-6">
+                        <h3 class="text-xl font-semibold mb-3">Configuration</h3>
+                        <h4 class="text-l font-semibold mb-3">config/config.yaml</h4>
+                        <p>Edit <code>config/config.yaml</code> to customize:</p>
+                        <pre class="language-yml"><code style="font-size: 0.8em;"># Trading Configuration
+tradeTime: 30                    # System runtime (seconds)
+maxHistory: 70                   # Price history window size
+minHistory: 10                   # Strategy activation threshold
+cash: 10000.0                    # Portfolio balance
+
+# Strategy Selection (uncomment desired strategy)
+selected_class: SimpleMovingAverageStrategy # Active algorithm
+# selected_class: BollingerBandsStrategy
+# selected_class: MomentumRSIStrategy
+
+obj_name: simpleMovingAverage      # Strategy instance name
+# obj_name: bollingerBands
+# obj_name: momentumRSI</code></pre>
+                        <h4 class="text-l font-semibold mb-3">config/functionEnhanced.yaml</h4>
+                        <p>Adds parameter validation and error handling to existing C++ code:</p>
+                        <h5 class="font-semibold mt-4 mb-2">Format</h5>
+                        <pre class="language-yml"><code style="font-size: 0.8em;">filename.cpp:
+- ReturnType ClassName::FunctionName(param1, param2, ...)
+- ReturnType ClassName::AnotherFunction(param1, param2, ...)
+
+another_file.cpp:
+- ReturnType Function(parameters)</code></pre>
+                 </div>
+
+  
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-6">
+                        <h3 class="text-xl font-semibold mb-3">Deployment</h3>
+                        <h4 class="text-l font-semibold mb-3">One-Command Deployment</h4>
+                        <p>This single command automates the entire process: code generation, building, and execution.</p>
+                        <pre class="language-bash"><code style="font-size: 0.8em;"># Recommended: Complete automated setup
+python3 RunTradeSystem.py</code></pre>
+                        <h4 class="text-l font-semibold mb-3">Manual Deployment Steps</h4>
+                        <p>For advanced users who want to run each step manually. This requires two separate terminals.</p>
+                        <pre class="language-bash"><code style="font-size: 0.8em;">#1. Cleanup previous builds
+rm -f src/*.cpp.bak src/TradeStrategy/*.cpp.bak                     
+                   
+#2. Generate code and configuration
+python3 utilLocal/GenerateStrategy/generate_code.py   # Generate StrategyWrapper based on config.yaml
+python3 utilLocal/UserDefineYmalFile.py               # Update C++ constants from config.yaml
+
+# 3. Optional enhancements
+python3 utilLocal/CppLogInjector.py                   # Automatically injects LOG statements at function entry/exit points:
+python3 tools/Add_check_all.py src                    # Enhances functions with parameter validation and exception handling based on YAML configuration:
+
+# 4. Build system
+make clean && make all
+
+# 5. Execution (two terminals required)
+# Terminal 1: Trading system (start first as server)
+./output/trading_system
+
+# Terminal 2: Market data feed (start after trading system is running)
+python3 src/MarketFetch.py</code></pre>
+                 </div>
+ 
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-6">
+                        <h3 class="text-xl font-semibold mb-3">Output Files</h3>
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700">
+                        <li><strong>result.txt:</strong> Complete trading system output with UTF-8 encoding</li>
+                        <li><strong>market_data.csv:</strong> Historical price data with rotating buffer.</li>
+                        <li><strong>parameter_check.log:</strong> Parameter validation errors.(optional: run Add_check_all.py)</li>
+                        <li><strong>error.log:</strong> Runtime exception tracking with timestamps. (optional: run Add_check_all.py)</li>
+                        </ol>
+                     </div>
+                 </div>                        
+            </section>
+
+            <!-- Architecture Section -->
+            <section id="architecture" class="content-section space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">System Architecture</h2>
+                    <p class="text-lg text-slate-600">The Crypto Trading System implements a <strong>hybrid multi-process architecture</strong> combining C++ multi-threading with Python real-time data acquisition. The system uses socket-based inter-process communication, thread-safe mechanisms, and a sophisticated strategy pattern.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                <h3 class="text-xl font-semibold mb-3">Architecture Diagram</h3>
+                <pre><code>
+                ┌─────────────────────────────────────────────────────────────────────────────────────┐
+                │                           Main Thread (C++ - Thread 1)                              │
+                │  ┌─────────────┐  ┌──────────────┐  ┌─────────────┐  ┌─────────────────────────┐   │
+                │  │   System    │  │ Create Shared│  │  Wait for   │  │   Display Final         │   │
+                │  │ Initialize  │  │ Components &amp; │  │ WAIT_SECONDS│  │   Portfolio Results     │   │
+                │  │   &amp; Launch  │  │Launch Threads│  │             │  │                         │   │
+                │  └─────────────┘  └──────────────┘  └─────────────┘  └─────────────────────────┘   │
+                └─────────────────────────────────────────────────────────────────────────────────────┘
+                           │                    │                    │
+                           │                    │                    │
+                    ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+                    │  Python     │      │C++ Thread 2 │      │C++ Thread 3 │
+                    │MarketFetch  │◄────►│ Strategy    │─────►│ Trade       │
+                    │   Process   │Socket│ Engine +    │Queue │ Executor    │
+                    │             │      │SocketServer │      │             │
+                    └─────────────┘      └─────────────┘      └─────────────┘
+                           │                     │                     │
+                    ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+                    │   Binance   │      │ Strategy    │      │ Portfolio   │
+                    │ BTCUSDT API │      │ Wrapper     │      │ Management  │
+                    │ + CSV Log   │      │ Pattern     │      │ + P&amp;L Calc  │
+                    └─────────────┘      └─────────────┘      └─────────────┘</code></pre>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-3">Component Responsibilities</h3>
+                    <ul class="space-y-4">
+                        <li><strong>Main Thread (C++- main.cpp):</strong> Orchestrates the system, launching threads and displaying final results.</li>
+                        <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                        <li style="font-size:14px;"><strong>System Orchestration</strong>: Initialize logging, create shared SafeQueue instances</li>
+                        <li style="font-size:14px;"><strong>Component Creation</strong>: Create StrategyEngine and TradeExecutor with shared ActionSignal queue</li>
+                        <li style="font-size:14px;"><strong>Thread Management</strong>: Launch strategy and execution threads using std::thread</li>
+                        <li style="font-size:14px;"><strong>Wait Management</strong>: Sleep for WAIT_SECONDS(configurable from config.yaml)</li>
+                        <li style="font-size:14px;"><strong>Final Reporting</strong>: Display portfolio status and P&amp;L from TradeExecutor</li>
+                        </ul>
+                        <li style="font-size:14px;"><strong>Key Constants (Auto-updated from config.yaml):</strong></li>
+                        <pre class="language-cpp"><code style="font-size: 0.7em;">constexpr uint32_t WAIT_SECONDS = 30;        // From config.yaml tradeTime
+const double DEFAULT_CASH = 10000.0;         // Initial portfolio balance</code></pre>
+                        <li><strong>MarketFetch (Python Thread 1):</strong> Fetches live data from Binance API and sends it to the C++ server via a socket.</li>
+                        <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                        <li style="font-size:14px;"><strong>Live Data Fetching</strong>: Primary Binance BTCUSDT API with 1-second intervals</li>
+                        <li style="font-size:14px;"><strong>Data Management</strong>: 2000-entry rotating deque buffer with CSV persistence</li>
+                        <li style="font-size:14px;"><strong>Socket Client</strong>: TCP connection to localhost:9999 with JSON messaging</li>
+                        <li style="font-size:14px;"><strong>Error Handling</strong>: 5-second timeouts, automatic reconnection, comprehensive</li>
+                        </ul>
+                        <li style="font-size:14px;"><strong>Data Sources:</strong></li>
+                        <pre class="language-python"><code style="font-size: 0.7em;"># Primary: Binance API
+url = "https://api.binance.com/api/v3/ticker/price"
+params = {"symbol": "BTCUSDT"}</code></pre>
+                        <li><strong>Strategy Engine (C++ Thread 2):</strong> Acts as a socket server, processes incoming market data, applies the selected trading strategy, and generates trade signals.</li>
+                        <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                        <li style="font-size:14px;"><strong>Socket Server</strong>: Cross-platform TCP server (Windows Winsock2/Linux POSIX)</li>
+                        <li style="font-size:14px;"><strong>Message Processing</strong>: JSON parsing with buffer management for newline-delimited messages</li>
+                        <li style="font-size:14px;"><strong>Price History</strong>: Sliding window using `std::deque<double>` with configurable MAX_HISTORY and MIN_HISTORY</li>
+                        <li style="font-size:14px;"><strong>Strategy Integration</strong>: StrategyWrapper pattern with auto-generated strategy selection</li>
+                        <li style="font-size:14px;"><strong>Signal Generation</strong>: ActionSignal creation for trade recommendations sent to SafeQueue</li>
+                        </ul>
+                        <li><strong>Trade Executor (C++ Thread 3):</strong> Consumes trade signals from a thread-safe queue, executes simulated trades, and manages the portfolio.</li>
+                        <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                        <li style="font-size:14px;"><strong>Signal Processing</strong>: Consumes ActionSignal from SafeQueue</li>
+                        <li style="font-size:14px;"><strong>Order Execution</strong>: Buy/sell validation with balance/holdings checks</li>
+                        <li style="font-size:14px;"><strong>Portfolio Tracking</strong>: Real-time cash and BTC balance management</li>
+                        <li style="font-size:14px;"><strong>Transaction Analytics</strong>: Complete trade statistics and P&L calculations</li>
+                        </ul>
+                        <li style="font-size:14px;"><strong>Portfolio State Management:</strong></li>
+                        <pre class="language-cpp"><code style="font-size: 0.7em;">class TradeExecutor {
+    double initialFiatBalance_;     // Starting capital ($10,000)
+    double currentFiatBalance_;     // Available cash
+    double cryptoAssetAmount_;      // BTC holdings
+    uint32_t totalTrades_;          // Total transactions
+    uint32_t totalBuyAction_;       // Buy order count
+    uint32_t totalSellAction_;      // Sell order count
+};</code></pre>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- Core Components Section -->
+            <section id="core-components" class="content-section space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Core Components</h2>
+                    <p class="text-lg text-slate-600">Dive into the key mechanisms that power the trading system, including the communication layers, strategy pattern implementation, and the error handling framework.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h4 class="text-xl font-semibold mb-4">Thread-Safe Communication Layers</h4>
+
+                    <div>
+                        <h5 class="font-semibold text-lg mb-2">Inter-Process (Python ↔ C++)</h5>
+                         <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                            <li style="font-size:14px;"><strong>Protocol</strong>: TCP socket communication on localhost:9999</li>
+                            <li style="font-size:14px;"><strong>Data Format</strong>: JSON messages with newline delimiters</li>
+                   <pre style="overflow: auto;" class="language-cpp"><code style="font-size: 0.7em;">// Connection: Python Client ←TCP→ C++ Server (localhost:9999)
+{"symbol": "BTC", "price": 29847.52, "timestamp": 1692284400.123}\n</code></pre>
+                            <li style="font-size:14px;"><strong>Direction</strong>: Python MarketFetch.py (client) → C++ StrategyEngine (server)</li>
+                            <li style="font-size:14px;"><strong>Purpose</strong>: Real-time market data transmission</li>
+                         </ul>
+                    </div>
+
+
+                    <div>
+                        <h5 class="font-semibold text-lg mb-2">Intra-Process (C++ Threads)</h5>
+                        <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                            <li style="font-size:14px;"><strong>Mechanism</strong>: SafeQueue template with mutex and condition variables</li>
+                            <li style="font-size:14px;"><strong>Direction</strong>: StrategyEngine (Thread 2) → TradeExecutor (Thread 3)</li>
+                            <li style="font-size:14px;"><strong>Data Type</strong>: ActionSignal objects containing trade recommendations</li>
+                            <li style="font-size:14px;"><strong>Thread Safety</strong>: Blocking dequeue operations with proper synchronization</li>
+                            <pre style="overflow: auto;" class="language-cpp"><code style="font-size: 0.7em;">class SafeQueue {
+std::queue<T> queue_;
+std::mutex mutex_;
+std::condition_variable condition_;
+
+public:
+void enqueue(const T& item);    // Thread-safe insertion
+T dequeue();                    // Thread-safe removal with blocking
+bool empty() const;             // Thread-safe size check
+};
+
+// Inter-thread communication via SafeQueue
+SafeQueue<ActionSignal> actionSignalQueue;
+
+// Thread 2: Strategy Engine enqueues signals
+ActionSignal signal{ActionType::BUY, price, amount, timestamp};
+actionSignalQueue.enqueue(signal);
+
+// Thread 3: Trade Executor dequeues and processes
+ActionSignal signal = actionSignalQueue.dequeue(); // Blocks until available</code></pre>
+                        </ul>
+                    </div>   
+
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h4 class="text-xl font-semibold mb-4">Strategy Pattern & Code Generation</h4>
+                    <p  style="font-size:14px;" >The system uses a Strategy pattern to allow for dynamic selection of trading algorithms. A Python script reads `config.yaml` and uses a Jinja2 template to automatically generate the C++ `StrategyWrapper` code, which initializes the selected strategy at compile time.</p>
+                    <pre class="language-cpp"><code style="font-size: 0.7em;">// strategy_wrapper_impl.cpp.jinja2
+IStrategy* StrategyWrapper::strategy_ = nullptr;
+
+void StrategyWrapper::initialize() 
+{
+    if (!strategy_) {
+        static {{ selected_class }} {{ obj_name }};
+        strategy_ = &{{ obj_name }};
+    }
+}
+</code></pre>
+                <pre class="language-cpp"><code style="font-size: 0.7em;">// Auto-generated StrategyWrapper.cpp
+IStrategy* StrategyWrapper::strategy_ = nullptr;
+
+void StrategyWrapper::initialize() {
+    if (!strategy_) {
+        static SimpleMovingAverageStrategy simpleMovingAverage;
+        strategy_ = &simpleMovingAverage;
+    }
+}</code></pre>
+                     <div class="flex space-x-4">
+                        <span class="inline-block bg-sky-100 text-sky-800 text-sm font-medium px-3 py-1 rounded-full">SimpleMovingAverage</span>
+                        <span class="inline-block bg-sky-100 text-sky-800 text-sm font-medium px-3 py-1 rounded-full">BollingerBands</span>
+                        <span class="inline-block bg-sky-100 text-sky-800 text-sm font-medium px-3 py-1 rounded-full">MomentumRSI</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h4 class="text-xl font-semibold mb-4">Cross-Platform :</h4>
+                    <p  style="font-size:14px;" >Cross-Platform  Build System Integration:</p>
+                    <pre class="language-makefile"><code style="font-size: 0.7em;"># Cross-platform makefile supporting both Linux and Windows
+# Works with GCC on Linux and MinGW/MSVC on Windows
+
+# Platform detection
+ifeq ($(OS),Windows_NT)
+    PLATFORM = WIN32
+    CXX = g++
+    LDFLAGS += -lws2_32  # Windows socket library
+else
+    PLATFORM = POSIX
+    CXX = g++
+    LDFLAGS += -lpthread  # Linux threading library
+endif</code></pre>
+                    <p  style="font-size:14px;" >Cross-Platform Socket Implementation:</p>
+                    <pre class="language-cpp"><code style="font-size: 0.7em;">#ifdef _WIN32
+    #include 
+    #define CLOSESOCKET closesocket
+#else
+    #include 
+    #define SOCKET int
+    #define CLOSESOCKET close
+#endif </code></pre>
+                </div>
+            </section>
+            
+            <!-- Dev Tools Section -->
+            <section id="dev-tools" class="content-section space-y-8">
+                 <div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Enhancement Tools & Automation</h2>
+                    <p class="text-lg text-slate-600">The project includes a suite of Python-based tools to automate and enhance the development pipeline, from code generation to adding advanced features like logging and validation.</p>
+                </div>
+                            
+       
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-4">CppLogInjector.py</h3>
+                    <p class="mb-4 text-slate-700">This tool automatically injects logging statements at the entry and exit points of C++ functions, providing detailed execution tracing without manual code changes.</p>
+                    <pre class="language-cpp"><code style="font-size: 0.7em;">// Before transformation
+bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
+{
+    // Original logic
+}
+
+// After transformation
+bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
+{
+    LOG(CustomerLogLevel::INFO) << " This is start of " << __FILE__ << "::" << __FUNCTION__;
+    // Original logic
+    LOG(CustomerLogLevel::INFO) << " This is stop of " << __FILE__ << "::" << __FUNCTION__;
+} </code></pre>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-4">Add_check_all.py</h3>
+                    <p class="mb-4 text-slate-700">Based on `functionEnhanced.yaml`, this script enhances specified C++ functions with automated parameter validation and try-catch blocks for robust exception handling.</p>
+                    <ul class="text-slate-700 list-disc ml-6 space-y-2">
+                        <li style="font-size:14px;"><strong>Parameter Validation</strong>: Automatically injects `check_all()` function calls</li>
+                        <li style="font-size:14px;"><strong>Error Handling</strong>: Wraps existing code with comprehensive try-catch blocks</li>
+                        <li style="font-size:14px;"><strong>File Safety</strong>: Creates backup files (`.bak`) before modification</li>
+                        <li style="font-size:14px;"><strong>Smart Detection</strong>: Avoids duplicate additions if code is already enhanced</li>
+                        <li style="font-size:14px;"><strong>Logging Integration</strong>: Automatic error logging to `error.log` and `parameter_check.log`</li>
+                    </ul>
+                    <pre class="language-cpp"><code style="font-size: 0.7em;">template &lt;typename... Args&gt;
+bool check_all(const std::string& functionName, Args&&... args)
+{
+    // Validates all parameters and logs errors
+    // Returns false if any parameter fails validation
+}
+                    </code></pre>
+                    <pre class="language-cpp"><code style="font-size: 0.7em;">// Before transformation
+bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
+{
+    // Original logic
+}
+bool TradeExecutor::ExecuteBuyOrder(double price, double amount) {
+    if (!check_all("TradeExecutor::ExecuteBuyOrder", price, amount)) 
+    {
+        std::cerr << "Invalid parameters in TradeExecutor::ExecuteBuyOrder! See parameter_check.log for details" << std::endl;
+        return false;
+    }
+    try 
+    {
+        // Original function logic
+    }
+    catch (const std::exception& e) 
+    {
+        ErrorLogger::LogError("TradeExecutor", "ExecuteBuyOrder", "std::exception", e.what());
+        std::cerr << "Exception in TradeExecutor::ExecuteBuyOrder! See error.log for details." << std::endl;
+        return false;
+    }
+    catch (...) 
+    {
+        ErrorLogger::LogError("TradeExecutor", "ExecuteBuyOrder", "Unknown", "Unspecified error");
+        std::cerr << "Unknown exception in TradeExecutor::ExecuteBuyOrder! See error.log for details." << std::endl;
+        return false;
+    }
+}
+                    </code></pre>
+                </div>
+
+            </section>
+ 
+            <!-- Performance Section -->
+            <section id="performance" class="content-section space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Performance & Testing</h2>
+                    <p class="text-lg text-slate-600">The system is designed for high performance and resilience. This section outlines key performance metrics and the multi-layered approach to quality assurance.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-4">Real-Time Performance</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-700">
+                            <li><strong>Data Latency:</strong> Sub-second data delivery from API to processing.</li>
+                            <li><strong>CPU Optimization:</strong> O(1) sliding window operations with `std::deque`.</li>
+                            <li><strong>Network Resilience:</strong> 5-second timeouts and automatic reconnection.</li>
+                            <li><strong>Memory Management:</strong> Efficient rotating deque buffer for price history.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-4">Current System Specifications</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-700">
+                            <li><strong>Runtime Duration:</strong> 30 seconds (configurable via `tradeTime`).</li>
+                            <li><strong>Price History Window:</strong> 70 data points maximum (`maxHistory`).</li>
+                            <li><strong>Strategy Activation:</strong> 10 data points minimum (`minHistory`)</li>
+                            <li><strong>Default Portfolio:</strong> $10,000 starting capital (`DEFAULT_CASH`)</li>
+                            <li><strong>Trade Size:</strong> Efficient rotating deque buffer for price history.</li>
+                            <li><strong>Data Frequency:</strong> 0.01 BTC per transaction (hardcoded)</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="text-xl font-semibold mb-4">Quality Assurance</h3>
+                        <p class="mb-2 text-slate-700">A multi-layered error handling strategy ensures system stability:</p>
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700">
+                            <li><strong>Exception Handling:</strong> Runtime try-catch blocks && parameter type checking with logging.</li>
+                            <li><strong>Network Level:</strong> Handles API failures and socket disconnections.</li>
+                            <li><strong>Application Level:</strong> Manages trading logic errors like insufficient funds.</li>
+                        </ol>
+                    </div>
+                    
+                </div>
+            </section>
+                        <!-- Performance Section -->
+            <section id="CI/CD" class="content-section space-y-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">CI / CD</h2>
+                    <p class="text-lg text-slate-600">The project uses a <strong>GitLab CI/CD pipeline</strong> to automate the build, test, and deployment processes. The pipeline is defined in the <code>main.yml</code> file and consists of two main stages: <code>docker_build</code> and <code>build</code>. The pipeline is configured to run automatically for branches, merge requests, and web-initiated events.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-4">Docker Build Stage</h3>
+                    <p class="mb-4 text-slate-700">This stage is responsible for creating a custom Docker image to serve as the build and test environment. It uses the <code>Dockerfile</code> to ensure a consistent and isolated environment.</p>
+                    <ul class="list-disc list-inside space-y-2 text-slate-700">
+                        <li><strong>Dockerfile:</strong> The <code>Dockerfile</code> is based on <code>ubuntu:22.04</code> and installs all necessary dependencies, including <code>git</code>, <code>build-essential</code> (for C++ compilation), <code>python3</code>, <code>pip3</code>, and specific Python libraries like <code>pyyaml</code>, <code>jinja2</code>, and <code>requests</code>.</li>
+                        <li><strong>Image Creation:</strong> The <code>build_image</code> job logs into the GitLab Container Registry, builds the Docker image from the Dockerfile, and tags it with both the commit SHA and the "latest" tag.</li>
+                        <li><strong>Push to Registry:</strong> After building, the job pushes the newly created image to the GitLab Container Registry for future use.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-4">Build and Test Stage</h3>
+                    <p class="mb-4 text-slate-700">This stage uses the custom Docker image created in the previous stage to run the trading system's automated setup and testing scripts.</p>
+                    <ul class="list-disc list-inside space-y-2 text-slate-700">
+                        <li><strong>Job Image:</strong> It navigates to the project directory and executes <code>python RunTradeSystem.py</code>. This single command handles the entire process, from code generation and building the C++ binary to running the trading system and market data feed.</li>
+                        <li><strong>Execution:</strong> The <code>build_image</code> job logs into the GitLab Container Registry, builds the Docker image from the Dockerfile, and tags it with both the commit SHA and the "latest" tag.</li>
+                        <li><strong>Artifacts:</strong> The job is configured to save key output files as artifacts, which are retained for one week. These include<strong> result.txt, parameter_check.log.error.log, market_data.csv</strong></li>
+                    </ul>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarNav = document.getElementById('sidebar-nav');
+            const mobileNavSelect = document.getElementById('mobile-nav-select');
+            const navLinks = sidebarNav ? sidebarNav.querySelectorAll('.nav-link') : [];
+            const contentSections = document.querySelectorAll('.content-section');
+
+            function setActiveSection(hash) {
+                const targetHash = hash ? hash : '#overview';
+                
+                // Update content sections
+                contentSections.forEach(section => {
+                    if ('#' + section.id === targetHash) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+
+                // Update sidebar navigation
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href') === targetHash) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                
+                // Update mobile navigation
+                if (mobileNavSelect) {
+                    mobileNavSelect.value = targetHash.substring(1);
+                }
+            }
+
+            // Handle sidebar navigation clicks
+            if (sidebarNav) {
+                sidebarNav.addEventListener('click', (e) => {
+                    const link = e.target.closest('a');
+                    if (link) {
+                        e.preventDefault();
+                        const targetHash = link.getAttribute('href');
+                        window.location.hash = targetHash;
+                    }
+                });
+            }
+            
+            // Handle mobile navigation changes
+            if (mobileNavSelect) {
+                mobileNavSelect.addEventListener('change', (e) => {
+                    const targetHash = '#' + e.target.value;
+                    window.location.hash = targetHash;
+                });
+            }
+
+            // Handle hash changes (for back/forward buttons and direct links)
+            window.addEventListener('hashchange', () => {
+                setActiveSection(window.location.hash);
+            });
+
+            // Set initial active section based on URL hash or default to overview
+            setActiveSection(window.location.hash);
+
+            // Copy to clipboard functionality
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const pre = button.parentElement;
+                    const code = pre.querySelector('code');
+                    const text = code.innerText;
+
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        button.textContent = 'Copied!';
+                        setTimeout(() => {
+                            button.textContent = 'Copy';
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                        button.textContent = 'Error';
+                    }
+                    document.body.removeChild(textarea);
+                });
+            });
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>
