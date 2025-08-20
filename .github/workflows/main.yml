@@ -100,4 +100,5 @@ jobs:
             result.txt
             parameter_check.log
             error.log
+            market_data.csv
           retention-days: 7
