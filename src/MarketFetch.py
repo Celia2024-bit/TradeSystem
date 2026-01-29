@@ -4,11 +4,17 @@ import json
 import random
 import csv
 import requests
+import argparse
+import os 
 from collections import deque
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--output", type=str, default="market_data.csv")
+args = parser.parse_args()
 
 MAX_ENTRIES = 2000
 FLUSH_INTERVAL = 10
-DATA_FILE = "market_data.csv"
+DATA_FILE = args.output
 
 data_queue = deque()
 flush_counter = 0
@@ -40,6 +46,7 @@ def fetch_price():
     }
 
 def write_csv():
+    os.makedirs(os.path.dirname(os.path.abspath(DATA_FILE)), exist_ok=True)
     with open(DATA_FILE, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["symbol", "price", "timestamp"])
