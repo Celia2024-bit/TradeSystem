@@ -1,8 +1,3 @@
-tradeTime: 30
-
-maxHistory: 70
-minHistory: 10 
-
 selected_class:  SimpleMovingAverageStrategy 
 #BollingerBandsStrategy
 #MomentumRSIStrategy
