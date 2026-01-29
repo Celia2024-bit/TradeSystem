@@ -13,6 +13,12 @@ if os.name == 'nt':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
     os.system('chcp 65001 > nul 2>&1')
+    
+MONITOR_CONFIG = {
+    "interval": 1,        # 监控采样频率 (秒)
+    "trend_limit": 2,     # 聚合点数 (每 X 个点生成一个趋势点)
+    "result_dir": "build_result"
+}
 
 def safe_print(text):
     try:
@@ -40,7 +46,7 @@ def get_config_duration(file_path="config.cfg"):
 
 def main():
     # --- [1. 恢复：环境清理和代码生成] ---
-    result_dir = "build_result"
+    result_dir = MONITOR_CONFIG["result_dir"]
     if os.path.exists(result_dir):
         safe_print(f"Cleaning old results in {result_dir}...")
         shutil.rmtree(result_dir)  # 删除整个文件夹
@@ -80,9 +86,9 @@ def main():
     monitor_proc = subprocess.Popen([
         sys.executable, monitor_script, 
         "--pid", str(cpp_pid),
-        "--interval", str(C.DEFAULT_INTERVAL),      # 从 constants 读取
-        "--limit", str(C.DEFAULT_TREND_LIMIT),      # 从 constants 读取
-        "--raw", raw_csv_path,                # 建议也显式传入文件名
+        "--interval", str(MONITOR_CONFIG["interval"]),    # 使用本地变量
+        "--limit", str(MONITOR_CONFIG["trend_limit"]),    # 使用本地变量
+        "--raw", raw_csv_path,
         "--trend", trend_csv_path
     ])
 
