@@ -104,11 +104,23 @@ def main():
 
     # --- [6. 等待与生命周期管理] ---
     # 逻辑：只要 C++ 还在跑，我们就等着；C++ 一停，我们立刻收割其他进程
+    run_duration = get_config_duration()
+    buffer_time = 10 # 给 10 秒缓冲区
+    total_wait = run_duration + buffer_time
+
+    safe_print(f"⏳ System running. Will auto-collect results in {total_wait}s...")
+
     try:
-        trading_proc.wait() 
-        safe_print("✨ trading_system execution finished.")
-    except KeyboardInterrupt:
-        safe_print("⚠️ Manual stop requested.")
+        # 2. 关键修改：不要无限等，最多等 total_wait 秒
+        trading_proc.wait(timeout=total_wait)
+        safe_print("✨ trading_system exited naturally.")
+    except subprocess.TimeoutExpired:
+        # 3. 如果超时了还没停，强制杀掉它！
+        safe_print(f"⚠️ Time's up! Force terminating trading_system to generate reports...")
+        trading_proc.terminate() 
+        # 确保它真的死了
+        try: trading_proc.wait(timeout=5)
+        except: trading_proc.kill()
 
     # --- [7. 清理：终止所有辅助进程] ---
     safe_print("🛑 Terminating helper processes...")
