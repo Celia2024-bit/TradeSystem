@@ -4,88 +4,52 @@ import time
 import sys
 import os
 
-# Configure stdout to handle UTF-8 on Windows
-if os.name == 'nt':  # Windows
-    import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
-    # Set console to UTF-8 mode
-    os.system('chcp 65001 > nul 2>&1')
-
-def safe_print(text):
-    """Print function that handles Unicode characters safely"""
+def get_config_duration(file_path="config.cfg"):
     try:
-        print(text)
-    except UnicodeEncodeError:
-        # Fallback to ASCII if Unicode fails
-        fallback_text = text.encode('ascii', 'replace').decode('ascii')
-        print(fallback_text)
-
-def run_script(path, interpreter=None, args=None):
-    try:
-        cmd = [interpreter, path] if interpreter else [path]
-        if args:
-            cmd.extend(args)
-        subprocess.run(cmd, check=True)
-        safe_print(f"✅ Successfully ran: {' '.join(cmd)}")
-    except subprocess.CalledProcessError as e:
-        safe_print(f"❌ Failed to run: {' '.join(cmd)}\nError: {e}")
+        with open(file_path, "r") as f:
+            for line in f:
+                if line.startswith("RUN_DURATION="):
+                    return int(line.split("=")[1].strip())
+    except: pass
+    return 30
 
 def main():
-   subprocess.run("rm -rf src/*.cpp.bak", shell=True, check=True)
-   subprocess.run("rm -rf src/TradeStrategy/*.cpp.bak", shell=True, check=True)
-   run_script("utilLocal/GenerateStrategy/generate_code.py", interpreter="python3")
-   #run_script("utilLocal/CppLogInjector.py", interpreter="python3")
-   #run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])
+    run_duration = get_config_duration()
+    
+    # 1. 启动 C++ Trading System
+    print(f"🚀 [1/3] Starting trading_system...")
+    with open("result.txt", "w", encoding='utf-8') as f:
+        # 注意：这里确保你的 exe 路径正确
+        trading_proc = subprocess.Popen(["./output/trading_system"], stdout=f, stderr=subprocess.STDOUT)
+    
+    cpp_pid = trading_proc.pid # 核心：获取刚启动的 PID
+    print(f"✅ trading_system started with PID: {cpp_pid}")
 
-   try:
-        subprocess.run(["make", "clean"], check=True)
-        subprocess.run(["make", "all"], check=True)
-        safe_print("✅ Build successful: make all")
-   except subprocess.CalledProcessError as e:
-        safe_print(f"❌ Build failed\nError: {e}")
-        sys.exit(1)
+    # 2. 启动监控器 (传入 PID)
+    print(f"📊 [2/3] Starting monitor for PID {cpp_pid}...")
+    monitor_proc = subprocess.Popen([
+        sys.executable, "tools/performance_monitor/run_monitor.py", 
+        "--pid", str(cpp_pid),  # 传递 PID
+        "--raw", "system_perf_raw.csv"
+    ])
 
-    # Start trading_system in the background first (as server) and capture output
-   safe_print("🚀 Starting trading_system as server...")
-   with open("result.txt", "w", encoding='utf-8') as f:
-        trading_process = subprocess.Popen(
-            ["./output/trading_system"], 
-            stdout=f, 
-            stderr=subprocess.STDOUT
-        )
+    # 3. 启动 MarketFetch
+    time.sleep(1) # 给 C++ 一点点启动 Socket 的时间
+    print("📈 [3/3] Starting MarketFetch.py...")
+    fetch_proc = subprocess.Popen([sys.executable, "src/MarketFetch.py"])
 
-    # Start MarketFetch.py (as client)
-   safe_print("🚀 Starting MarketFetch.py as client...")
-   market_fetch_process = subprocess.Popen(["python3", "src/MarketFetch.py"])
+    # 4. 等待 C++ 结束 (它会根据 config.cfg 里的时间自己停)
+    try:
+        trading_proc.wait() 
+        print("✨ trading_system finished execution.")
+    except KeyboardInterrupt:
+        print("⚠️ Manual stop.")
 
-    # Wait for both processes to complete with a timeout
-   TIMEOUT_SECONDS = 42 # A few seconds longer than the main.cppp wait
-   start_time = time.time()
-   while time.time() - start_time < TIMEOUT_SECONDS:
-       if trading_process.poll() is not None and market_fetch_process.poll() is not None:
-           break
-       time.sleep(1)
-       
-   # Terminate any remaining processes
-   safe_print("🛑 Terminating processes after timeout...")
-   if trading_process.poll() is None:
-       trading_process.terminate()
-   if market_fetch_process.poll() is None:
-       market_fetch_process.terminate()
-       
-   try:
-        trading_process.wait(timeout=5)
-        safe_print("✅ trading_system completed, output saved to result.txt")
-   except subprocess.TimeoutExpired:
-        trading_process.kill()
-        safe_print("❌ trading_system did not terminate gracefully. Killed.")
-   
-   try:
-        market_fetch_process.wait(timeout=5)
-   except subprocess.TimeoutExpired:
-        market_fetch_process.kill()
-        safe_print("❌ MarketFetch.py did not terminate gracefully. Killed.")
+    # 5. 清理：C++ 停了，其他的也该停了
+    for name, p in [("Fetcher", fetch_proc), ("Monitor", monitor_proc)]:
+        if p.poll() is None:
+            print(f"Stopping {name}...")
+            p.terminate()
 
 if __name__ == "__main__":
     main()
