@@ -560,43 +560,45 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount) {
             </section>
  
             <!-- Performance Section -->
-            <section id="performance" class="content-section space-y-8">
-                <div>
-                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Performance & Testing</h2>
-                    <p class="text-lg text-slate-600">The system is designed for high performance and resilience. This section outlines key performance metrics and the multi-layered approach to quality assurance.</p>
+            <section id="performance" class="content-section hidden space-y-8">
+                <div class="border-b border-slate-700 pb-4">
+                    <h2 class="text-3xl font-bold text-white">Performance Auditing</h2>
+                    <p class="text-slate-400 mt-2">Automated resource tracking and trend visualization.</p>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-                        <h3 class="text-xl font-semibold mb-4">Real-Time Performance</h3>
-                        <ul class="list-disc list-inside space-y-2 text-slate-700">
-                            <li><strong>Data Latency:</strong> Sub-second data delivery from API to processing.</li>
-                            <li><strong>CPU Optimization:</strong> O(1) sliding window operations with `std::deque`.</li>
-                            <li><strong>Network Resilience:</strong> 5-second timeouts and automatic reconnection.</li>
-                            <li><strong>Memory Management:</strong> Efficient rotating deque buffer for price history.</li>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <h3 class="text-sky-400 font-semibold mb-3">Monitoring Metrics</h3>
+                        <ul class="list-disc list-inside text-slate-300 space-y-2">
+                            <li><strong>Memory (MB)</strong>: Tracking heap allocation & stability</li>
+                            <li><strong>Handle Count</strong>: Detecting potential resource leaks (Sockets/Files)</li>
+                            <li><strong>CPU Usage</strong>: Analyzing thread efficiency across 3 cores</li>
                         </ul>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-                        <h3 class="text-xl font-semibold mb-4">Current System Specifications</h3>
-                        <ul class="list-disc list-inside space-y-2 text-slate-700">
-                            <li><strong>Runtime Duration:</strong> 30 seconds (configurable via `tradeTime`).</li>
-                            <li><strong>Price History Window:</strong> 70 data points maximum (`maxHistory`).</li>
-                            <li><strong>Strategy Activation:</strong> 10 data points minimum (`minHistory`)</li>
-                            <li><strong>Default Portfolio:</strong> $10,000 starting capital (`DEFAULT_CASH`)</li>
-                            <li><strong>Trade Size:</strong> Efficient rotating deque buffer for price history.</li>
-                            <li><strong>Data Frequency:</strong> 0.01 BTC per transaction (hardcoded)</li>
-                        </ul>
+                    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                        <h3 class="text-sky-400 font-semibold mb-3">Automated Visualization</h3>
+                        <p class="text-slate-300 text-sm">Post-run, the system triggers <code>plot_performance.py</code> to convert CSV data into high-resolution PNG reports.</p>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-                        <h3 class="text-xl font-semibold mb-4">Quality Assurance</h3>
-                        <p class="mb-2 text-slate-700">A multi-layered error handling strategy ensures system stability:</p>
-                        <ol class="list-decimal list-inside space-y-2 text-slate-700">
-                            <li><strong>Exception Handling:</strong> Runtime try-catch blocks && parameter type checking with logging.</li>
-                            <li><strong>Network Level:</strong> Handles API failures and socket disconnections.</li>
-                            <li><strong>Application Level:</strong> Manages trading logic errors like insufficient funds.</li>
-                        </ol>
+                </div>
+
+                <div class="bg-slate-900 p-6 rounded-xl border border-slate-700">
+                    <h3 class="text-white font-semibold mb-4">Generated Artifacts (build_result/)</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-3 bg-slate-800 rounded border border-slate-600">
+                            <div class="flex items-center">
+                                <span class="text-green-400 mr-3">📈</span>
+                                <code class="text-slate-200">report_trend_summary.png</code>
+                            </div>
+                            <span class="text-xs text-slate-500">Aggregated Performance Trend</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-slate-800 rounded border border-slate-600">
+                            <div class="flex items-center">
+                                <span class="text-blue-400 mr-3">📊</span>
+                                <code class="text-slate-200">report_raw_detail.png</code>
+                            </div>
+                            <span class="text-xs text-slate-500">Second-by-Second Raw Metrics</span>
+                        </div>
                     </div>
-                    
                 </div>
             </section>
             <!-- CI/CD Section -->

@@ -32,6 +32,7 @@ The Crypto Trading System is a high-performance, multi-threaded cryptocurrency t
 - **One-command Execution**: Complete automation from development to production
 - **Error Handling**: Comprehensive validation with ErrorLogger and graceful error recovery
 - **Modern C++ Compatibility**: Uses C++17 features for maximum type safety and performance
+- **Real-time Performance Auditing**: Dedicated Python monitor tracking CPU, Memory, and Handles with automated trend chart generation.
 
 ### System Specifications
 
@@ -193,6 +194,12 @@ The Crypto Trading System implements a **hybrid multi-process architecture** com
     │ + CSV Log   │      │ Pattern     │      │ + P&L Calc  │
     └─────────────┘      └─────────────┘      └─────────────┘
 ```
+
+### Performance Monitoring Layer
+The system now includes a non-intrusive monitoring suite located in `tools/performance_monitor/`:
+1. **run_monitor.py**: Attaches to the `trading_system` PID to collect high-frequency metrics.
+2. **plot_performance.py**: Post-processes CSV data into professional trend charts using Pandas and Matplotlib.
+3. **build_result/**: A centralized directory for all execution artifacts, including `raw_performance.csv` and performance PNG reports.
 
 ### Component Responsibilities
 
@@ -489,6 +496,13 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount) {
 - **Trade Size**: 0.01 BTC per transaction (hardcoded)
 - **Data Frequency**: 1-second intervals from Binance API
 
+### Automated Performance Auditing
+The system features an integrated monitoring suite that captures real-time metrics during execution.
+
+- **High-Frequency Monitoring**: Tracks CPU, Memory, and System Handles every second.
+- **Trend Analysis**: Aggregates raw data into smooth trend lines to detect long-term resource leaks.
+- **Visual Reporting**: Automatically generates professional charts after each run.
+
 ### Quality Assurance
 
 #### Multi-layered Error Handling
@@ -498,12 +512,13 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount) {
 3. **Network Level**: API failures, socket disconnections, timeout handling
 4. **Application Level**: Insufficient funds, invalid trade amounts, strategy failures
 
-#### Output Files
-
-- **result.txt**: Complete trading system output with UTF-8 encoding
+#### Output Files & Reports
 - **parameter_check.log**: Parameter validation errors
 - **error.log**: Runtime exception tracking with timestamps
-- **market_data.csv**: Historical price data with rotating buffer
+- **build_result/result.txt**: Standard output and trading logs.
+- **build_result/market_data.csv**: Captured price data from Binance.
+- **build_result/report_raw_detail.png**: Detailed line charts showing second-by-second resource fluctuations.
+- **build_result/report_trend_summary.png**: Aggregated trend chart highlighting overall system stability and memory growth patterns.
 
 ---
 
