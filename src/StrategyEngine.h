@@ -20,6 +20,8 @@ private:
     std::mutex& systemBrokenMutex_;
     std::condition_variable& systemBrokenCV_;
     IStrategy*  strategy_;
+    uint32_t maxHistory_;
+    uint32_t minHistory_;
     void HandlePrice(double price);
     bool InitSocket();
     void HandleMessage(const std::string& jsonStr, TradeData& currentMarketData);
@@ -29,7 +31,8 @@ public:
                 std::condition_variable& marketDataCV, std::mutex& marketDataMutex,
                 std::condition_variable& actionSignalCV, std::mutex& actionSignalMutex, 
                 std::atomic<bool>  &systemRunningFlag,  std::atomic<bool>& systemBrokenFlag,
-                std::mutex& systemBrokenMutex,  std::condition_variable& systemBrokenCV);
+                std::mutex& systemBrokenMutex,  std::condition_variable& systemBrokenCV,
+                uint32_t maxH, uint32_t minH);
 
     void ProcessMarketDataAndGenerateSignals();
 };

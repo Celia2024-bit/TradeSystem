@@ -35,7 +35,6 @@ def main():
    subprocess.run("rm -rf src/*.cpp.bak", shell=True, check=True)
    subprocess.run("rm -rf src/TradeStrategy/*.cpp.bak", shell=True, check=True)
    run_script("utilLocal/GenerateStrategy/generate_code.py", interpreter="python3")
-   run_script("utilLocal/UserDefineYmalFile.py", interpreter="python3")
    #run_script("utilLocal/CppLogInjector.py", interpreter="python3")
    #run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])
 

@@ -1,8 +1,6 @@
 #include "StrategyEngine.h"
 #include <iomanip>
 
-constexpr uint32_t MAX_HISTORY = 70;
-constexpr uint32_t MIN_HISTORY = 10; 
 using json = nlohmann::json;
 #ifdef _WIN32
     #include <winsock2.h>
@@ -22,7 +20,8 @@ StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<
                          std::condition_variable& marketDataCV, std::mutex& marketDataMutex,
                          std::condition_variable& actionSignalCV, std::mutex& actionSignalMutex,
                          std::atomic<bool>  &systemRunningFlag,  std::atomic<bool>& systemBrokenFlag,
-                         std::mutex& systemBrokenMutex,  std::condition_variable& systemBrokenCV)
+                         std::mutex& systemBrokenMutex,  std::condition_variable& systemBrokenCV,
+                         uint32_t maxH, uint32_t minH)
     : marketDataQueue_(marketDataQueue),
       actionSignalQueue_(actionSignalQueue),
       marketDataCV_(marketDataCV),
@@ -33,7 +32,8 @@ StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<
       systemRunningFlag_(systemRunningFlag),
       systemBrokenFlag_(systemBrokenFlag),
       systemBrokenMutex_(systemBrokenMutex),
-      systemBrokenCV_(systemBrokenCV) 
+      systemBrokenCV_(systemBrokenCV),
+      maxHistory_(maxH), minHistory_(minH)
 {
       StrategyWrapper::initialize();
 }
@@ -127,13 +127,13 @@ void StrategyEngine::HandleMessage(const std::string& jsonStr, TradeData& curren
 void StrategyEngine::HandlePrice(double price)
 {
     priceHistory_.push_back(price);
-    if (priceHistory_.size() > MAX_HISTORY)
+    if (priceHistory_.size() > maxHistory_)
     {
         priceHistory_.pop_front(); // Remove the oldest element efficiently
     }
 
     ActionType generatedActionType = ActionType::HOLD;
-    if (priceHistory_.size() >= MIN_HISTORY)
+    if (priceHistory_.size() >= minHistory_)
     {
         generatedActionType = StrategyWrapper::runStrategy(priceHistory_);
     }
