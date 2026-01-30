@@ -29,13 +29,13 @@ private:
 public:
     TradeExecutor() = delete;
 
-    TradeExecutor(double initialCash, SystemContext& ctx);
+    TradeExecutor(SystemContext& ctx);
 
     void RunTradeExecutionLoop();
     double CalculateTotalPortfolioValue(double currentPrice) const;
     double CalculateProfitLoss(double currentPrice) const;
     void DisplayPortfolioStatus(double currentPrice);
-    double GetCurrentPrice(void) const { return currentPrice_; } 
+    double GetCurrentPrice(void) const { return currentPrice_; }  
 };
 
 #endif // TRADEEXECUTOR_H

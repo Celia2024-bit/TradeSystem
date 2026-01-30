@@ -1,9 +1,9 @@
 #include "TradeExecutor.h"
 
 // 简化构造函数实现
-TradeExecutor::TradeExecutor(double initialCash, SystemContext& ctx)
-    : initialFiatBalance_(initialCash), 
-      currentFiatBalance_(initialCash),
+TradeExecutor::TradeExecutor(SystemContext& ctx)
+    : initialFiatBalance_(ctx.initialCash), 
+      currentFiatBalance_(ctx.initialCash),
       actionSignalCtx_(ctx.actionSignal),
       systemState_(ctx.state)
 {
