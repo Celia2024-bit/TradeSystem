@@ -4,35 +4,26 @@
 #include "pch.h"
 #include "StrategyWrapper.h"
 #include "json.hpp"
+#include "SystemContext.h" // 引入封装的上下文
 
 class StrategyEngine
 {
 private:
-    SafeQueue<TradeData>& marketDataQueue_;       
-    SafeQueue<ActionSignal>& actionSignalQueue_;  
-    std::condition_variable& marketDataCV_;       
-    std::condition_variable& actionSignalCV_;    
-    std::mutex& marketDataMutex_;                
-    std::mutex& actionSignalMutex_;                 
+    // 替换分散的成员变量为上下文引用
+    MarketDataContext& marketDataCtx_;       
+    ActionSignalContext& actionSignalCtx_;  
+    SystemState& systemState_;
     std::deque<double> priceHistory_;         
-    std::atomic<bool>  &systemRunningFlag_;
-    std::atomic<bool>& systemBrokenFlag_;
-    std::mutex& systemBrokenMutex_;
-    std::condition_variable& systemBrokenCV_;
-    IStrategy*  strategy_;
     uint32_t maxHistory_;
     uint32_t minHistory_;
+
     void HandlePrice(double price);
     bool InitSocket();
     void HandleMessage(const std::string& jsonStr, TradeData& currentMarketData);
 public:
     StrategyEngine() = delete;
-    StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,
-                std::condition_variable& marketDataCV, std::mutex& marketDataMutex,
-                std::condition_variable& actionSignalCV, std::mutex& actionSignalMutex, 
-                std::atomic<bool>  &systemRunningFlag,  std::atomic<bool>& systemBrokenFlag,
-                std::mutex& systemBrokenMutex,  std::condition_variable& systemBrokenCV,
-                uint32_t maxH, uint32_t minH);
+    // 简化构造函数：仅接收全局上下文
+    explicit StrategyEngine(SystemContext& ctx);
 
     void ProcessMarketDataAndGenerateSignals();
 };

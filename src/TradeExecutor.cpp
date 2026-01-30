@@ -1,20 +1,12 @@
 #include "TradeExecutor.h"
 
-TradeExecutor::TradeExecutor(double cash,
-                     SafeQueue<ActionSignal>& actionSignalQueue,
-                     std::condition_variable& actionSignalCV,
-                     std::mutex& actionSignalMutex,
-                     std::atomic<bool>  &systemRunningFlag,
-                     std::atomic<bool>& systemBrokenFlag,
-                     std::mutex& systemBrokenMutex,
-                     std::condition_variable& systemBrokenCV)
-    : initialFiatBalance_(cash), currentFiatBalance_(cash),
-      actionSignalQueue_(actionSignalQueue), actionSignalCV_(actionSignalCV),
-      actionSignalMutex_(actionSignalMutex),
-      systemRunningFlag_(systemRunningFlag), systemBrokenFlag_(systemBrokenFlag),
-      systemBrokenMutex_(systemBrokenMutex), systemBrokenCV_(systemBrokenCV)
+// 简化构造函数实现
+TradeExecutor::TradeExecutor(double initialCash, SystemContext& ctx)
+    : initialFiatBalance_(initialCash), 
+      currentFiatBalance_(initialCash),
+      actionSignalCtx_(ctx.actionSignal),
+      systemState_(ctx.state)
 {
-
 }
 
 bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
@@ -40,7 +32,6 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
 
 bool TradeExecutor::ExecuteSellOrder(double price, double amount)
 {
-
     if (cryptoAssetAmount_ >= amount)
     {
         currentFiatBalance_ += price * amount;
@@ -81,7 +72,7 @@ bool TradeExecutor::HandleActionSignal(ActionType action, double price, double a
 
 void TradeExecutor::DisplayPortfolioStatus(double currentPrice)
 {
-    std::lock_guard<std::mutex> lock(tradeExecutorMutex_); // Lock while printing status
+    std::lock_guard<std::mutex> lock(tradeExecutorMutex_);
     double totalValue = CalculateTotalPortfolioValue(currentPrice);
     double profit = CalculateProfitLoss(currentPrice);
     LOG(Execution) << "\n--- Portfolio Status ---" ;
@@ -110,20 +101,22 @@ double TradeExecutor::CalculateProfitLoss(double currentPrice) const
 void TradeExecutor::RunTradeExecutionLoop()
 {
     LOG(Execution) << " RunTradeExecutionLoop started." ;
-    while (systemRunningFlag_.load(std::memory_order_acquire) &&
-           !systemBrokenFlag_.load(std::memory_order_acquire))
+    // 替换为上下文内的flag
+    while (systemState_.runningFlag.load(std::memory_order_acquire) &&
+           !systemState_.brokenFlag.load(std::memory_order_acquire))
     {
         ActionSignal receivedActionSignal;
         {
-            std::unique_lock<std::mutex> lock(actionSignalMutex_); 
-            if (!actionSignalCV_.wait_for(lock, std::chrono::seconds(2),
-                                    [this] { return !actionSignalQueue_.empty(); }))
+            // 替换为上下文内的mutex/cv
+            std::unique_lock<std::mutex> lock(actionSignalCtx_.mutex); 
+            if (!actionSignalCtx_.cv.wait_for(lock, std::chrono::seconds(2),
+                                    [this] { return !actionSignalCtx_.queue.empty(); }))
             {
                 LOG(Execution) << "Timeout waiting for action signal, checking flags and continuing...";
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue; 
             }
-            receivedActionSignal = actionSignalQueue_.dequeue();
+            receivedActionSignal = actionSignalCtx_.queue.dequeue();
             LOG(Execution) << "Received action signal: Type="
                       << (receivedActionSignal.type_ == ActionType::BUY ? "BUY" :
                          (receivedActionSignal.type_ == ActionType::SELL ? "SELL" : "HOLD"))

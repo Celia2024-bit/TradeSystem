@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include <iomanip>
+#include "SystemContext.h" 
 
 constexpr double DEFAULT_CASH = 10000.0; 
 
@@ -16,42 +17,24 @@ private:
     uint32_t totalBuyAction_ = 0; 
     uint32_t totalSellAction_ = 0;
     std::mutex tradeExecutorMutex_;
-
-    SafeQueue<ActionSignal>& actionSignalQueue_;
-    std::condition_variable& actionSignalCV_;
-    std::mutex& actionSignalMutex_;
-    std::atomic<bool>& systemRunningFlag_;
-    std::atomic<bool>& systemBrokenFlag_;
-    std::mutex& systemBrokenMutex_;
-    std::condition_variable& systemBrokenCV_;
+    ActionSignalContext& actionSignalCtx_;
+    SystemState& systemState_;
     double currentPrice_ = 0;
 
     bool ExecuteBuyOrder(double price, double amount);
     bool ExecuteSellOrder(double price, double amount);
-
     bool HandleActionSignal(ActionType action, double price, double amount);
     std::stringstream ss;
 
 public:
     TradeExecutor() = delete;
 
-    TradeExecutor(double cash,
-              SafeQueue<ActionSignal>& actionSignalQueue,
-              std::condition_variable& actionSignalCV,
-              std::mutex& actionSignalMutex,
-              std::atomic<bool>  &systemRunningFlag,
-              std::atomic<bool>& systemBrokenFlag,
-              std::mutex& systemBrokenMutex,  
-              std::condition_variable& systemBrokenCV);
+    TradeExecutor(double initialCash, SystemContext& ctx);
 
     void RunTradeExecutionLoop();
-
     double CalculateTotalPortfolioValue(double currentPrice) const;
-
     double CalculateProfitLoss(double currentPrice) const;
-
     void DisplayPortfolioStatus(double currentPrice);
-
     double GetCurrentPrice(void) const { return currentPrice_; } 
 };
 

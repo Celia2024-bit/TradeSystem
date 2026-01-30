@@ -16,26 +16,16 @@ using json = nlohmann::json;
     #define INVALID_SOCKET (-1)
 #endif
 
-StrategyEngine::StrategyEngine(SafeQueue<TradeData>& marketDataQueue, SafeQueue<ActionSignal>& actionSignalQueue,
-                         std::condition_variable& marketDataCV, std::mutex& marketDataMutex,
-                         std::condition_variable& actionSignalCV, std::mutex& actionSignalMutex,
-                         std::atomic<bool>  &systemRunningFlag,  std::atomic<bool>& systemBrokenFlag,
-                         std::mutex& systemBrokenMutex,  std::condition_variable& systemBrokenCV,
-                         uint32_t maxH, uint32_t minH)
-    : marketDataQueue_(marketDataQueue),
-      actionSignalQueue_(actionSignalQueue),
-      marketDataCV_(marketDataCV),
-      actionSignalCV_(actionSignalCV),
-      marketDataMutex_(marketDataMutex),
-      actionSignalMutex_(actionSignalMutex),
+// 简化构造函数实现
+StrategyEngine::StrategyEngine(SystemContext& ctx)
+    : marketDataCtx_(ctx.marketData),
+      actionSignalCtx_(ctx.actionSignal),
+      systemState_(ctx.state),
       priceHistory_(),
-      systemRunningFlag_(systemRunningFlag),
-      systemBrokenFlag_(systemBrokenFlag),
-      systemBrokenMutex_(systemBrokenMutex),
-      systemBrokenCV_(systemBrokenCV),
-      maxHistory_(maxH), minHistory_(minH)
+      maxHistory_(ctx.maxHistory), 
+      minHistory_(ctx.minHistory)
 {
-      StrategyWrapper::initialize();
+    StrategyWrapper::initialize();
 }
 
 void StrategyEngine::ProcessMarketDataAndGenerateSignals()
@@ -72,8 +62,9 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
     std::string buffer;
     char recv_buf[1024];
     
-    while (systemRunningFlag_.load(std::memory_order_acquire) &&
-           !systemBrokenFlag_.load(std::memory_order_acquire))
+    // 替换分散的flag为上下文内的状态
+    while (systemState_.runningFlag.load(std::memory_order_acquire) &&
+           !systemState_.brokenFlag.load(std::memory_order_acquire))
     {
         TradeData currentMarketData; 
 
@@ -129,7 +120,7 @@ void StrategyEngine::HandlePrice(double price)
     priceHistory_.push_back(price);
     if (priceHistory_.size() > maxHistory_)
     {
-        priceHistory_.pop_front(); // Remove the oldest element efficiently
+        priceHistory_.pop_front();
     }
 
     ActionType generatedActionType = ActionType::HOLD;
@@ -140,13 +131,14 @@ void StrategyEngine::HandlePrice(double price)
 
     if (generatedActionType != ActionType::HOLD)
     {
-        double defaultTradeAmount = 0.01; // Default trade amount
+        double defaultTradeAmount = 0.01;
         ActionSignal generatedActionSignal(generatedActionType, price, defaultTradeAmount);
 
         {
-            std::lock_guard<std::mutex> lock(actionSignalMutex_);
-            actionSignalQueue_.enqueue(generatedActionSignal); 
-            actionSignalCV_.notify_one();
+            // 替换为上下文内的mutex
+            std::lock_guard<std::mutex> lock(actionSignalCtx_.mutex);
+            actionSignalCtx_.queue.enqueue(generatedActionSignal); 
+            actionSignalCtx_.cv.notify_one();
             LOG(Strategy) << " Generated signal: "
                       << (generatedActionType == ActionType::BUY ? "BUY" : "SELL")
                       << " at price $" << std::fixed << std::setprecision(2)

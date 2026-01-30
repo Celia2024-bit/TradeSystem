@@ -1,17 +1,18 @@
 #include <iostream>
 #include <thread>
 #include <memory>
+#include <csignal>
 
-// Include necessary custom headers for the trading system components
-#include "StrategyEngine.h"      // Renamed from DataReceive.h
+#include "StrategyEngine.h"
 #include "TradeExecutor.h"
-#include "ConfigManager.h" // 引入新工具
+#include "ConfigManager.h"
+#include "SystemContext.h" // 引入封装的上下文
 
-// 全局停止信号，处理 Ctrl+C
+// 全局停止信号
 std::atomic<bool> g_external_stop(false);
 void signalHandler(int signum) { g_external_stop.store(true); }
 
-// Forward declarations of thread functions.
+// 线程函数声明
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
 void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 
@@ -30,7 +31,7 @@ LevelMapping customMappings = {
 
 int main()
 {
-    // ---0  Get Configuration
+    // 1. 加载配置
     auto& config = ConfigManager::instance();
     config.load("../config/config.cfg");
 
@@ -38,12 +39,10 @@ int main()
     double initialCash   = config.get("DEFAULT_CASH", 10000.0);
     uint32_t maxHistory  = static_cast<uint32_t>(config.get("MAX_HISTORY", 70));
     uint32_t minHistory  = static_cast<uint32_t>(config.get("MIN_HISTORY", 10));
-
     int levelInt = static_cast<int>(config.get("LOG_LEVEL", 0));
     CustomerLogLevel selectedLevel = static_cast<CustomerLogLevel>(levelInt);
     
-    
-    // --- 1  Init Log , formate 
+    // 2. 初始化日志
     LOGINIT(customMappings);
     Logger::getInstance().setLevel(selectedLevel);
     Logger::getInstance().setFormatter([](const LogMessage& msg) {
@@ -51,80 +50,68 @@ int main()
         ss << msg.levelName << " :: " << msg.message;
         return ss.str();
     });
-    // --- 2. Shared Resources: Queues and their synchronization primitives & Global System Control Flags and Synchronization for Shutdown ---
-    SafeQueue<TradeData> marketDataQueue;
-    std::mutex marketDataMutex;
-    std::condition_variable marketDataCV;
 
-    SafeQueue<ActionSignal> actionSignalQueue;
-    std::mutex actionSignalMutex;
-    std::condition_variable actionSignalCV;
+    // 3. 初始化全局上下文（核心简化点：所有同步组件聚合到这里）
+    SystemContext ctx{
+        .marketData = {}, // 市场数据队列+同步组件
+        .actionSignal = {}, // 交易信号队列+同步组件
+        .state = {}, // 系统运行/异常状态
+        .maxHistory = maxHistory,
+        .minHistory = minHistory,
+        .initialCash = initialCash
+    };
 
-   
-    std::atomic<bool> systemRunningFlag(true); // Flag to signal threads to run or stop
-    std::atomic<bool> systemBrokenFlag(false); // Flag to signal critical error
-    std::mutex systemBrokenMutex;
-    std::condition_variable systemBrokenCV;
+    // 4. 初始化核心组件（构造函数大幅简化）
+    std::shared_ptr<StrategyEngine> strategyEngine = std::make_shared<StrategyEngine>(ctx);
+    std::shared_ptr<TradeExecutor> tradeExecutor = std::make_shared<TradeExecutor>(initialCash, ctx);
 
-    // --- 3. Component Initialization: Creating shared_ptr instances ---
+    // 5. 注册信号处理
+    signal(SIGINT, signalHandler);
 
-    std::shared_ptr<StrategyEngine> strategyEngine =
-        std::make_shared<StrategyEngine>(marketDataQueue, actionSignalQueue, marketDataCV,
-                                         marketDataMutex, actionSignalCV, actionSignalMutex,
-                                         systemRunningFlag, systemBrokenFlag, systemBrokenMutex, systemBrokenCV,
-                                         maxHistory, minHistory); // Added broken system flags
-
-    std::shared_ptr<TradeExecutor> tradeExecutor =
-        std::make_shared<TradeExecutor>(initialCash, actionSignalQueue, actionSignalCV,
-                                        actionSignalMutex,
-                                        systemRunningFlag, systemBrokenFlag, systemBrokenMutex, systemBrokenCV); // Added broken system flags
-
-    // --- 4. Thread Creation: Launching worker threads ---
+    // 6. 启动线程
     std::thread strategy_engine_thread(strategy_engine_thread_func, strategyEngine);
     std::thread trade_execution_thread(trade_execution_thread_func, tradeExecutor);
 
-    LOG(Main) << " All threads started. Running for WAIT_SECONDS seconds or until a critical error..." ;
-    // --- 5. Main Thread's Waiting Loop for System Shutdown Trigger ---
+    LOG(Main) << " All threads started. Running for " << waitSeconds << " seconds or until a critical error..." ;
+
+    // 7. 主线程等待退出条件
     auto startTime = std::chrono::steady_clock::now();
     {
-        std::unique_lock<std::mutex> lock(systemBrokenMutex);
-        while (!systemBrokenFlag.load() && !g_external_stop.load()) {
+        std::unique_lock<std::mutex> lock(ctx.state.brokenMutex);
+        while (!ctx.state.brokenFlag.load() && !g_external_stop.load()) {
             auto now = std::chrono::steady_clock::now();
             if (std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count() >= waitSeconds) {
                 break;
             }
-            systemBrokenCV.wait_for(lock, std::chrono::milliseconds(500));
+            ctx.state.brokenCV.wait_for(lock, std::chrono::milliseconds(500));
         }
     }
 
-    // --- 6. System Shutdown Sequence ---
-    systemRunningFlag.store(false, std::memory_order_release);
-    marketDataCV.notify_all();
-    actionSignalCV.notify_all();
+    // 8. 系统关闭
+    ctx.state.runningFlag.store(false, std::memory_order_release);
+    ctx.marketData.cv.notify_all();
+    ctx.actionSignal.cv.notify_all();
 
     LOG(Main) << "Signaling threads to shut down..." ;
 
-    // --- 7. Joining Threads: Waiting for all worker threads to complete ---
-
+    // 9. 等待线程结束
     strategy_engine_thread.join();
     trade_execution_thread.join();
 
-    // --- 8. Final Status Report and Program Exit ---
-    if (systemBrokenFlag.load(std::memory_order_acquire)) {
+    // 10. 输出最终状态
+    if (ctx.state.brokenFlag.load(std::memory_order_acquire)) {
         LOG(Main) << "\n--- System stopped due to a critical error in one of the components! ---\n" ;
     } else {
         LOG(Main) << "\n---  System stopped gracefully after running for the specified duration. ---\n" ;
     }
     
-    // Retrieve the last known price from TradeExecutor
-    // Retrieve the last known price from TradeExecutor
     double price = tradeExecutor->GetCurrentPrice();
     tradeExecutor->DisplayPortfolioStatus(price);
     
     return 0;
 }
 
-
+// 线程函数实现（无变化）
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine)
 {
     strategyEngine->ProcessMarketDataAndGenerateSignals();
