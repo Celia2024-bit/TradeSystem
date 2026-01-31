@@ -52,20 +52,9 @@ public:
      * @brief 删除stop文件（shutdown后清理）
      */
     void removeStopFile() {
-        std::cout << "[DEBUG] removeStopFile: Checking for stop file: " << stopFilePath_ << std::endl;
-        std::ifstream file(stopFilePath_);
-        if (file.good()) {
-            file.close();
-            if (std::remove(stopFilePath_.c_str()) == 0) {
-                std::cout << "[DEBUG] removeStopFile: Stop file removed: " << stopFilePath_ << std::endl;
-                LOG(Main) << "Stop file removed: " << stopFilePath_;
-            } else {
-                std::cerr << "[ERROR] removeStopFile: Failed to remove stop file" << std::endl;
-                LOG(ERROR) << "Failed to remove stop file";
-            }
-        } else {
-            std::cout << "[DEBUG] removeStopFile: No stop file found" << std::endl;
-        }
+        PlatformUtils::flushConsole(); // 跨平台刷新输出
+        bool exists = PlatformUtils::deleteFile(stopFilePath_);
+        PlatformUtils::flushConsole();
     }
 
     // 1. 启动阶段：只负责初始化
@@ -80,18 +69,19 @@ public:
 
         int levelInt = static_cast<int>(config.get("LOG_LEVEL", 0));
         CustomerLogLevel selectedLevel = static_cast<CustomerLogLevel>(levelInt);
-    
-	    // 2. 初始化日志
-	    LOGINIT(customMappings);
-	    Logger::getInstance().setLevel(selectedLevel);
-	    Logger::getInstance().setFormatter([](const LogMessage& msg) {
-	        std::stringstream ss;
-	        ss << msg.levelName << " :: " << msg.message;
-	        return ss.str();
-	    });
+
+        // 2. 初始化日志
+        LOGINIT(customMappings);
+        Logger::getInstance().setLevel(selectedLevel);
+        Logger::getInstance().setFormatter([](const LogMessage& msg) {
+          std::stringstream ss;
+          ss << msg.levelName << " :: " << msg.message;
+          return ss.str();
+        });
         strategyEngine_ = std::make_shared<StrategyEngine>(ctx_); //
         tradeExecutor_  = std::make_shared<TradeExecutor>(ctx_); //
-        
+
+        removeStopFile();
         LOG(Main) << "SystemManager: StartUp complete.";
     }
 
@@ -148,6 +138,9 @@ public:
             LOG(Main) << "StrategyEngine thread joined.";
         }
 
+        double price = tradeExecutor_->GetCurrentPrice(); //
+        tradeExecutor_->DisplayPortfolioStatus(price); //
+        removeStopFile();
         LOG(Main) << "SystemManager: ShutDown complete.";
         PlatformUtils::flushConsole();
     }
