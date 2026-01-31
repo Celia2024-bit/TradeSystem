@@ -9,13 +9,16 @@
 #include "SystemContext.h"
 #include "../util/PlatformUtils.h"
 
-// 全局变量，便于各阶段访问
-std::atomic<bool> g_external_stop(false);
-void signalHandler(int signum) { g_external_stop.store(true); }
-
 // 线程函数声明
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
 void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
+// 全局退出标志（确保跨线程可见）
+std::atomic<bool> g_external_stop(false);
+void signalHandler(int signum) {
+    g_external_stop.store(true, std::memory_order_release);
+    std::cout << "[SIGNAL] Ctrl+C detected, initiating shutdown..." << std::endl;
+    PlatformUtils::flushConsole(); // 强制打印日志
+}
 
 // 自定义日志映射
 LevelMapping customMappings = {
@@ -122,22 +125,31 @@ public:
 
     // 3. 关闭阶段：现在是 Public，可以被 main 主动调用
     void shutDown() {
-        // 防止重复关闭
-        if (!ctx_.state.runningFlag.load()) return;
-
         LOG(Main) << "SystemManager: Initiating ShutDown...";
+        PlatformUtils::flushConsole();
+
+        // 1. 设置退出标志（让子线程检测到）
+        ctx_.state.runningFlag.store(false, std::memory_order_release);
         
-        ctx_.state.runningFlag.store(false, std::memory_order_release); //
-        ctx_.marketData.cv.notify_all(); //
-        ctx_.actionSignal.cv.notify_all(); //
+        // 2. 关闭StrategyEngine的Socket（打断accept/recv阻塞）
+        if (strategyEngine_) {
+            strategyEngine_->closeSockets(); // 新增：关闭监听/客户端Socket
+        }
 
-        // 使用成员变量线程进行 join
-        if (strategyThread_.joinable()) strategyThread_.join(); //
-        if (tradeThread_.joinable()) tradeThread_.join(); //
+        // 3. 等待TradeExecutor线程退出
+        if (tradeThread_.joinable()) {
+            tradeThread_.join();
+            LOG(Main) << "TradeExecutor thread joined.";
+        }
 
-        double price = tradeExecutor_->GetCurrentPrice(); //
-        tradeExecutor_->DisplayPortfolioStatus(price); //
+        // 4. 等待StrategyEngine线程退出
+        if (strategyThread_.joinable()) { // 假设你有strategyEngineThread_线程变量
+            strategyThread_.join();
+            LOG(Main) << "StrategyEngine thread joined.";
+        }
+
         LOG(Main) << "SystemManager: ShutDown complete.";
+        PlatformUtils::flushConsole();
     }
 
 private:
