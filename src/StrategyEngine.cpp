@@ -57,59 +57,46 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
     }
 
     listen(server_fd_, 1);
-    client_fd_ = INVALID_SOCKET_VAL;
+    PlatformUtils::setSocketRecvTimeout(server_fd_, std::chrono::milliseconds(500));
 
+    client_fd_ = INVALID_SOCKET_VAL;
     std::string buffer;
     char recv_buf[1024];
-    
-    // 核心循环：每次迭代都检查退出标志
+
     while (systemState_.runningFlag.load(std::memory_order_acquire) &&
            !systemState_.brokenFlag.load(std::memory_order_acquire))
     {
-        TradeData currentMarketData; 
-
-        // 4. 若未连接客户端，尝试accept（带超时，避免永久阻塞）
+         TradeData currentMarketData; 
+        // 1. 处理连接：如果当前没有客户端，就执行 accept
         if (client_fd_ == INVALID_SOCKET_VAL) {
-            // 把监听Socket设为非阻塞，避免accept永久阻塞
-            PlatformUtils::setSocketNonBlocking(server_fd_);
-
-            // 非阻塞accept：有连接就处理，没连接就继续循环检查退出标志
+            // 因为设置了超时，accept 会在这里最多阻塞 500ms
             client_fd_ = accept(server_fd_, nullptr, nullptr);
+            
             if (client_fd_ == INVALID_SOCKET_VAL) {
-                // 无连接，短暂休眠后继续检查退出标志
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                continue;
+                // 这里通常是超时了，直接进入下一轮循环检查 runningFlag
+                continue; 
             }
 
-            // 客户端连接成功：恢复为阻塞模式（但设置recv超时）
-            PlatformUtils::setSocketBlocking(client_fd_);
-
-            // 设置recv超时（500ms，确保能周期性检查退出标志）
+            // 成功连接后，给新创建的 client_fd_ 也设置超时
             PlatformUtils::setSocketRecvTimeout(client_fd_, std::chrono::milliseconds(500));
+            LOG(Strategy) << "Client connected successfully.";
         }
 
-        // 5. 接收数据（带超时，超时后回到循环检查退出标志）
+        // 2. 接收数据：同样受 500ms 超时控制
         int bytes = recv(client_fd_, recv_buf, sizeof(recv_buf), 0);
         
-        // 处理recv返回值
         if (bytes < 0) {
-            // 超时：回到循环检查退出标志
-            #ifdef PLATFORM_WINDOWS
-            int err = WSAGetLastError();
-            if (err == WSAETIMEDOUT || err == WSAEWOULDBLOCK) {
-                continue;
+            // 检查是否为超时错误 (EAGAIN/EWOULDBLOCK/WSAETIMEDOUT)
+            if (PlatformUtils::isSocketTimeout()) { 
+                continue; 
             }
-            #else
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                continue;
-            }
-            #endif
-            // 非超时错误：关闭客户端Socket，重新等待连接
+            // 真正的网络错误，重置连接
             CLOSE_SOCKET(client_fd_);
             client_fd_ = INVALID_SOCKET_VAL;
             continue;
-        } else if (bytes == 0) {
-            // 客户端断开：关闭Socket，重新等待连接
+        } 
+        else if (bytes == 0) {
+            // 客户端正常断开
             CLOSE_SOCKET(client_fd_);
             client_fd_ = INVALID_SOCKET_VAL;
             continue;
