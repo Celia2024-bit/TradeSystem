@@ -71,13 +71,7 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
         // 4. 若未连接客户端，尝试accept（带超时，避免永久阻塞）
         if (client_fd_ == INVALID_SOCKET_VAL) {
             // 把监听Socket设为非阻塞，避免accept永久阻塞
-            #ifdef PLATFORM_WINDOWS
-            u_long mode = 1;
-            ioctlsocket(server_fd_, FIONBIO, &mode);
-            #else
-            int flags = fcntl(server_fd_, F_GETFL, 0);
-            fcntl(server_fd_, F_SETFL, flags | O_NONBLOCK);
-            #endif
+            PlatformUtils::setSocketNonBlocking(server_fd_);
 
             // 非阻塞accept：有连接就处理，没连接就继续循环检查退出标志
             client_fd_ = accept(server_fd_, nullptr, nullptr);
@@ -88,12 +82,7 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
             }
 
             // 客户端连接成功：恢复为阻塞模式（但设置recv超时）
-            #ifdef PLATFORM_WINDOWS
-            mode = 0;
-            ioctlsocket(client_fd_, FIONBIO, &mode);
-            #else
-            fcntl(client_fd_, F_SETFL, flags);
-            #endif
+            PlatformUtils::setSocketBlocking(client_fd_);
 
             // 设置recv超时（500ms，确保能周期性检查退出标志）
             PlatformUtils::setSocketRecvTimeout(client_fd_, std::chrono::milliseconds(500));
