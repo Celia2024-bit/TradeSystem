@@ -6,6 +6,23 @@
 #include "json.hpp"
 #include "SystemContext.h" // 引入封装的上下文
 
+
+#include "../util/PlatformUtils.h"
+
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #define CLOSESOCKET closesocket
+    #define SOCKET_CLEANUP() WSACleanup()
+#else
+    #include <netinet/in.h>
+    #include <unistd.h>
+    #define SOCKET int
+    #define CLOSESOCKET close
+    #define SOCKET_CLEANUP()
+    #define INVALID_SOCKET (-1)
+#endif
+
 class StrategyEngine
 {
 private:
@@ -16,6 +33,8 @@ private:
     std::deque<double> priceHistory_;         
     uint32_t maxHistory_;
     uint32_t minHistory_;
+    SOCKET server_fd_ = INVALID_SOCKET_VAL;
+    SOCKET client_fd_ = INVALID_SOCKET_VAL;
 
     void HandlePrice(double price);
     bool InitSocket();
@@ -26,6 +45,7 @@ public:
     explicit StrategyEngine(SystemContext& ctx);
 
     void ProcessMarketDataAndGenerateSignals();
+    void closeSockets();
 };
 
 #endif // STRATEGYENGINE_H
