@@ -8,6 +8,7 @@
 #include "ConfigManager.h"
 #include "SystemContext.h"
 
+
 // 全局变量，便于各阶段访问
 std::atomic<bool> g_external_stop(false);
 void signalHandler(int signum) { g_external_stop.store(true); }
@@ -36,7 +37,31 @@ LevelMapping customMappings = {
  */
 class SystemManager {
 public:
-    SystemManager() : waitSeconds_(30) {}
+    SystemManager() : stopFilePath_("./stop"), waitSeconds_(30) {}
+    bool checkStopFile() const {
+        std::ifstream file(stopFilePath_);
+        return file.good();
+    }
+
+    /**
+     * @brief 删除stop文件（shutdown后清理）
+     */
+    void removeStopFile() {
+        std::cout << "[DEBUG] removeStopFile: Checking for stop file: " << stopFilePath_ << std::endl;
+        std::ifstream file(stopFilePath_);
+        if (file.good()) {
+            file.close();
+            if (std::remove(stopFilePath_.c_str()) == 0) {
+                std::cout << "[DEBUG] removeStopFile: Stop file removed: " << stopFilePath_ << std::endl;
+                LOG(Main) << "Stop file removed: " << stopFilePath_;
+            } else {
+                std::cerr << "[ERROR] removeStopFile: Failed to remove stop file" << std::endl;
+                LOG(ERROR) << "Failed to remove stop file";
+            }
+        } else {
+            std::cout << "[DEBUG] removeStopFile: No stop file found" << std::endl;
+        }
+    }
 
     // 1. 启动阶段：只负责初始化
     void startUp() {
@@ -78,9 +103,13 @@ public:
             std::unique_lock<std::mutex> lock(ctx_.state.brokenMutex);
             // 监控循环：直到时间到、外部停止或系统崩溃
             while (!ctx_.state.brokenFlag.load() && !g_external_stop.load()) {
-                if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - startTime).count() >= waitSeconds_) {
+               // if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - startTime).count() >= waitSeconds_) {
+				  if (checkStopFile()) {
+                    LOG(Main) << "Stop file detected: " << stopFilePath_;
+                    std::cout << "[DEBUG] run: Stop file detected!" << std::endl;
                     break;
                 }
+
                 ctx_.state.brokenCV.wait_for(lock, std::chrono::milliseconds(500));
             }
         }
@@ -119,6 +148,7 @@ private:
     std::thread tradeThread_;
     
     uint32_t waitSeconds_;
+    std::string stopFilePath_;  ;
 };
 // --- Main 函数 ---
 
