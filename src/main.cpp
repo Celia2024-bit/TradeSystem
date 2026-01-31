@@ -34,112 +34,102 @@ LevelMapping customMappings = {
  * @brief 系统启动初始化
  * 负责：加载配置、初始化日志、设置系统上下文、创建核心组件
  */
-void startUp(SystemContext& ctx, std::shared_ptr<StrategyEngine>& strategyEngine, std::shared_ptr<TradeExecutor>& tradeExecutor, uint32_t& waitSeconds) {
-    // 1. 加载配置
-    auto& config = ConfigManager::instance();
-    config.load("../config/config.cfg");
+class SystemManager {
+public:
+    SystemManager() : waitSeconds_(30) {}
 
-    waitSeconds  = static_cast<uint32_t>(config.get("RUN_DURATION", 30));
-    double initialCash   = config.get("DEFAULT_CASH", 10000.0);
-    uint32_t maxHistory  = static_cast<uint32_t>(config.get("MAX_HISTORY", 70));
-    uint32_t minHistory  = static_cast<uint32_t>(config.get("MIN_HISTORY", 10));
-    int levelInt         = static_cast<int>(config.get("LOG_LEVEL", 0));
-    CustomerLogLevel selectedLevel = static_cast<CustomerLogLevel>(levelInt);
+    // 1. 启动阶段：只负责初始化
+    void startUp() {
+        auto& config = ConfigManager::instance();
+        config.load("../config/config.cfg");
+
+        waitSeconds_  = static_cast<uint32_t>(config.get("RUN_DURATION", 30));
+        ctx_.initialCash = config.get("DEFAULT_CASH", 10000.0);
+        ctx_.maxHistory = static_cast<uint32_t>(config.get("MAX_HISTORY", 70));
+        ctx_.minHistory = static_cast<uint32_t>(config.get("MIN_HISTORY", 10));
+
+        int levelInt = static_cast<int>(config.get("LOG_LEVEL", 0));
+        CustomerLogLevel selectedLevel = static_cast<CustomerLogLevel>(levelInt);
     
-    // 2. 初始化日志
-    LOGINIT(customMappings);
-    Logger::getInstance().setLevel(selectedLevel);
-    Logger::getInstance().setFormatter([](const LogMessage& msg) {
-        std::stringstream ss;
-        ss << msg.levelName << " :: " << msg.message;
-        return ss.str();
-    });
-
-    // 3. 配置上下文
-    ctx.maxHistory = maxHistory;
-    ctx.minHistory = minHistory;
-    ctx.initialCash = initialCash;
-
-    // 4. 实例化组件
-    strategyEngine = std::make_shared<StrategyEngine>(ctx);
-    tradeExecutor = std::make_shared<TradeExecutor>(ctx);
-
-    // 5. 注册信号
-    signal(SIGINT, signalHandler);
-
-    LOG(Main) << "System initialization complete.";
-}
-
-/**
- * @brief 系统关闭清理
- * 负责：通知线程停止、回收资源、打印结算报告
- */
-void shutDown(SystemContext& ctx, std::thread& t1, std::thread& t2, std::shared_ptr<TradeExecutor> tradeExecutor) {
-    // 1. 发送停止信号
-    ctx.state.runningFlag.store(false, std::memory_order_release);
-    ctx.marketData.cv.notify_all();
-    ctx.actionSignal.cv.notify_all();
-
-    LOG(Main) << "Signaling threads to shut down..." ;
-
-    // 2. 等待线程汇合
-    if(t1.joinable()) t1.join();
-    if(t2.joinable()) t2.join();
-
-    // 3. 打印最终状态
-    if (ctx.state.brokenFlag.load(std::memory_order_acquire)) {
-        LOG(Main) << "\n--- System stopped due to a critical error! ---\n" ;
-    } else {
-        LOG(Main) << "\n--- System stopped gracefully. ---\n" ;
+	    // 2. 初始化日志
+	    LOGINIT(customMappings);
+	    Logger::getInstance().setLevel(selectedLevel);
+	    Logger::getInstance().setFormatter([](const LogMessage& msg) {
+	        std::stringstream ss;
+	        ss << msg.levelName << " :: " << msg.message;
+	        return ss.str();
+	    });
+        strategyEngine_ = std::make_shared<StrategyEngine>(ctx_); //
+        tradeExecutor_  = std::make_shared<TradeExecutor>(ctx_); //
+        
+        LOG(Main) << "SystemManager: StartUp complete.";
     }
-    
-    double price = tradeExecutor->GetCurrentPrice();
-    tradeExecutor->DisplayPortfolioStatus(price);
-}
 
+    // 2. 运行阶段：启动线程并进入监控
+    void run() {
+        // 将线程赋值给成员变量，这样 shutDown 随时能访问它们
+        strategyThread_ = std::thread(&StrategyEngine::ProcessMarketDataAndGenerateSignals, strategyEngine_.get()); //
+        tradeThread_ = std::thread(&TradeExecutor::RunTradeExecutionLoop, tradeExecutor_.get()); //
+
+        LOG(Main) << "Threads started. Entering monitoring loop...";
+
+        auto startTime = std::chrono::steady_clock::now();
+        {
+            std::unique_lock<std::mutex> lock(ctx_.state.brokenMutex);
+            // 监控循环：直到时间到、外部停止或系统崩溃
+            while (!ctx_.state.brokenFlag.load() && !g_external_stop.load()) {
+                if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - startTime).count() >= waitSeconds_) {
+                    break;
+                }
+                ctx_.state.brokenCV.wait_for(lock, std::chrono::milliseconds(500));
+            }
+        }
+        
+        // 监控结束，自动调用关闭
+        shutDown();
+    }
+
+    // 3. 关闭阶段：现在是 Public，可以被 main 主动调用
+    void shutDown() {
+        // 防止重复关闭
+        if (!ctx_.state.runningFlag.load()) return;
+
+        LOG(Main) << "SystemManager: Initiating ShutDown...";
+        
+        ctx_.state.runningFlag.store(false, std::memory_order_release); //
+        ctx_.marketData.cv.notify_all(); //
+        ctx_.actionSignal.cv.notify_all(); //
+
+        // 使用成员变量线程进行 join
+        if (strategyThread_.joinable()) strategyThread_.join(); //
+        if (tradeThread_.joinable()) tradeThread_.join(); //
+
+        double price = tradeExecutor_->GetCurrentPrice(); //
+        tradeExecutor_->DisplayPortfolioStatus(price); //
+        LOG(Main) << "SystemManager: ShutDown complete.";
+    }
+
+private:
+    SystemContext ctx_;
+    std::shared_ptr<StrategyEngine> strategyEngine_;
+    std::shared_ptr<TradeExecutor> tradeExecutor_;
+    
+    // 定义为成员变量，解决局部变量无法跨函数访问的问题
+    std::thread strategyThread_;
+    std::thread tradeThread_;
+    
+    uint32_t waitSeconds_;
+};
 // --- Main 函数 ---
 
-int main()
-{
-    // 初始化上下文对象
-    SystemContext ctx{};
-    std::shared_ptr<StrategyEngine> strategyEngine;
-    std::shared_ptr<TradeExecutor> tradeExecutor;
-    uint32_t waitSeconds = 30;
+int main() {
+    SystemManager manager;
+    
+    // 注册信号处理
+    signal(SIGINT, signalHandler); 
 
-    // 执行启动流程
-    startUp(ctx, strategyEngine, tradeExecutor, waitSeconds);
-
-    // 启动工作线程
-    std::thread strategy_engine_thread(strategy_engine_thread_func, strategyEngine);
-    std::thread trade_execution_thread(trade_execution_thread_func, tradeExecutor);
-
-    LOG(Main) << "All threads started. Running for " << waitSeconds << " seconds..." ;
-
-    // 主线程监控循环
-    auto startTime = std::chrono::steady_clock::now();
-    {
-        std::unique_lock<std::mutex> lock(ctx.state.brokenMutex);
-        while (!ctx.state.brokenFlag.load() && !g_external_stop.load()) {
-            auto now = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count() >= waitSeconds) {
-                break;
-            }
-            ctx.state.brokenCV.wait_for(lock, std::chrono::milliseconds(500));
-        }
-    }
-
-    // 执行关闭流程
-    shutDown(ctx, strategy_engine_thread, trade_execution_thread, tradeExecutor);
+    manager.startUp();
+    manager.run();
 
     return 0;
-}
-
-// 线程函数实现
-void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine) {
-    strategyEngine->ProcessMarketDataAndGenerateSignals();
-}
-
-void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor) {
-    tradeExecutor->RunTradeExecutionLoop();
 }
