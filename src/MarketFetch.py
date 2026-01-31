@@ -68,8 +68,9 @@ def start_sender():
             time.sleep(5)
             continue
         message = json.dumps(data) + "\n"
+        print("Get data  111")
         sock.sendall(message.encode('utf-8'))
-
+        print("Get data  222")
         data_queue.append(data)
         if len(data_queue) > MAX_ENTRIES:
             data_queue.popleft()
