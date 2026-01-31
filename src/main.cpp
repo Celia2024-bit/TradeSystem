@@ -15,6 +15,7 @@ void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
 // 全局退出标志（确保跨线程可见）
 std::atomic<bool> g_external_stop(false);
 void signalHandler(int signum) {
+    (void) signum;
     g_external_stop.store(true, std::memory_order_release);
     std::cout << "[SIGNAL] Ctrl+C detected, initiating shutdown..." << std::endl;
     PlatformUtils::flushConsole(); // 强制打印日志
@@ -40,7 +41,7 @@ LevelMapping customMappings = {
  */
 class SystemManager {
 public:
-    SystemManager() : stopFilePath_("./stop"), waitSeconds_(30) {}
+    SystemManager() : stopFilePath_("./stop"){}
 
     bool checkStopFile() const {
         PlatformUtils::flushConsole(); // 跨平台刷新输出
@@ -53,7 +54,7 @@ public:
      */
     void removeStopFile() {
         PlatformUtils::flushConsole(); // 跨平台刷新输出
-        bool exists = PlatformUtils::deleteFile(stopFilePath_);
+        PlatformUtils::deleteFile(stopFilePath_);
         PlatformUtils::flushConsole();
     }
 
@@ -62,7 +63,6 @@ public:
         auto& config = ConfigManager::instance();
         config.load("../config/config.cfg");
 
-        waitSeconds_  = static_cast<uint32_t>(config.get("RUN_DURATION", 30));
         ctx_.initialCash = config.get("DEFAULT_CASH", 10000.0);
         ctx_.maxHistory = static_cast<uint32_t>(config.get("MAX_HISTORY", 70));
         ctx_.minHistory = static_cast<uint32_t>(config.get("MIN_HISTORY", 10));
@@ -93,13 +93,11 @@ public:
 
         LOG(Main) << "Threads started. Entering monitoring loop...";
 
-        auto startTime = std::chrono::steady_clock::now();
         {
             std::unique_lock<std::mutex> lock(ctx_.state.brokenMutex);
             // 监控循环：直到时间到、外部停止或系统崩溃
             while (!ctx_.state.brokenFlag.load() && !g_external_stop.load()) {
-               // if (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - startTime).count() >= waitSeconds_) {
-				  if (checkStopFile()) {
+                if (checkStopFile()) {
                     LOG(Main) << "Stop file detected: " << stopFilePath_;
                     std::cout << "[DEBUG] run: Stop file detected!" << std::endl;
                     break;
@@ -154,7 +152,6 @@ private:
     std::thread strategyThread_;
     std::thread tradeThread_;
     
-    uint32_t waitSeconds_;
     std::string stopFilePath_;  ;
 };
 // --- Main 函数 ---
