@@ -1,6 +1,6 @@
 #include "StrategyEngine.h"
 #include <iomanip>
-
+#include "../util/PlatformUtils.h"
 using json = nlohmann::json;
 #ifdef _WIN32
     #include <winsock2.h>
@@ -16,6 +16,8 @@ using json = nlohmann::json;
     #define INVALID_SOCKET (-1)
 #endif
 
+
+
 // 简化构造函数实现
 StrategyEngine::StrategyEngine(SystemContext& ctx)
     : marketDataCtx_(ctx.marketData),
@@ -26,6 +28,7 @@ StrategyEngine::StrategyEngine(SystemContext& ctx)
       minHistory_(ctx.minHistory)
 {
     StrategyWrapper::initialize();
+    
 }
 
 void StrategyEngine::ProcessMarketDataAndGenerateSignals()
@@ -54,6 +57,7 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
 
     listen(server_fd, 1);
     SOCKET client_fd = accept(server_fd, nullptr, nullptr);
+    PlatformUtils::setSocketRecvTimeout(client_fd, std::chrono::milliseconds(500));
     if (client_fd == INVALID_SOCKET) {
         std::cerr << "[ERROR] Accept failed\n";
         return;
