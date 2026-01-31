@@ -6,11 +6,17 @@ CXX = g++
 # Detect platform
 UNAME_S := $(shell uname -s)
 
-# Windows-specific linker flags (Git Bash / MinGW)
+
 ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
-    PLATFORM_LIBS = -lws2_32
+    # Windows MinGW
+    TARGET_SUFFIX = .exe
+    PLATFORM_LIBS = -lws2_32 -lstdc++fs  # 网络+filesystem
+    CXXFLAGS += -DPLATFORM_WINDOWS=1 -fexec-charset=GBK
 else
+    # Linux/Mac
+    TARGET_SUFFIX =
     PLATFORM_LIBS =
+    CXXFLAGS += -DPLATFORM_LINUX=1
 endif
 
 # Compiler flags
@@ -37,6 +43,7 @@ SRCS = src/main.cpp \
        src/StrategyEngine.cpp \
        src/StrategyWrapper.cpp \
        util/Logger.cpp \
+       util/PlatformUtils.cpp \
        $(EXTRA_SRCS)
 
 # Generate a list of object files (.o) from the source files
