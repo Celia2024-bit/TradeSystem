@@ -7,7 +7,7 @@
 #include "TradeExecutor.h"
 #include "ConfigManager.h"
 #include "SystemContext.h"
-
+#include "../util/PlatformUtils.h"
 
 // 全局变量，便于各阶段访问
 std::atomic<bool> g_external_stop(false);
@@ -38,11 +38,13 @@ LevelMapping customMappings = {
 class SystemManager {
 public:
     SystemManager() : stopFilePath_("./stop"), waitSeconds_(30) {}
-    bool checkStopFile() const {
-        std::ifstream file(stopFilePath_);
-        return file.good();
-    }
 
+    bool checkStopFile() const {
+        PlatformUtils::flushConsole(); // 跨平台刷新输出
+        bool exists = PlatformUtils::fileExists(stopFilePath_);
+        PlatformUtils::flushConsole();
+        return exists;
+    }
     /**
      * @brief 删除stop文件（shutdown后清理）
      */
