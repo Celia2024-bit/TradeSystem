@@ -45,6 +45,26 @@ def fetch_price():
         "timestamp": time.time()
     }
 
+def get_market_data():
+    """
+    根据环境决定获取数据的方式
+    """
+    # 检查是否在 GitHub Actions 运行
+    is_ci_env = os.environ.get('GITHUB_ACTIONS') == 'true'
+
+    if is_ci_env:
+        # 在 CI/CD 环境下直接使用模拟数据，避免网络报错
+        print("[INFO] Running in CI/CD environment, using simulated data.")
+        return fetch_price()
+    else:
+        # 在本地环境下，先尝试获取真实币安价格
+        data = fetch_price_binance()
+        if data:
+            return data
+        else:
+            print("[WARN] Binance API failed, falling back to simulated data.")
+            return fetch_price()
+
 def write_csv():
     os.makedirs(os.path.dirname(os.path.abspath(DATA_FILE)), exist_ok=True)
     with open(DATA_FILE, "w", newline="") as f:
@@ -59,10 +79,19 @@ def write_csv():
 def start_sender():
     global flush_counter
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(('localhost', 9999))
+    # 增加重试机制，防止 C++ Server 还没准备好就 Connect 失败
+    connected = False
+    while not connected:
+        try:
+            sock.connect(('localhost', 9999))
+            connected = True
+        except ConnectionRefusedError:
+            print("[WAIT] Waiting for C++ Server to listen on 9999...")
+            time.sleep(1)
 
     while True:
-        data = fetch_price_binance()
+        # 使用包装后的函数替换原来的 fetch_price_binance
+        data = get_market_data()
         if data is None:
             print("[SKIP] No valid data to send")
             time.sleep(5)
