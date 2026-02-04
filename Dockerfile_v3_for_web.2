@@ -1,0 +1,70 @@
+# Use a lightweight Ubuntu base image
+FROM ubuntu:22.04
+
+# Set environment variables to prevent interactive prompts during apt installs
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install necessary packages:
+# git: for cloning repositories
+# build-essential: includes g++ and make for C/C++ compilation
+# ca-certificates: SSL certificates for HTTPS connections
+# python3: Python 3 interpreter
+# python3-pip: Python package manager
+RUN apt-get update && apt-get install -y \
+    git \
+    net-tools \
+    build-essential \
+    ca-certificates \
+    python3 \
+    python3-pip && \
+    pip3 install --no-cache-dir pyyaml jinja2 requests psutil pandas matplotlib ccxt && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create symbolic link for python command
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Verify installations
+RUN git --version && \
+    g++ --version && \
+    make --version && \
+    python3 --version && \
+    pip3 --version && \
+    python3 -c "import yaml; print('PyYAML version:', yaml.__version__)"
+
+# Set the working directory
+WORKDIR /app
+
+# 🔥 Clone the TradeSystem repository
+RUN git clone https://github.com/Celia2024-bit/TradeSystem.git
+
+# 🔥 Change to the repository directory
+WORKDIR /app/TradeSystem
+
+# 1. 强制打破缓存并拉取主仓库最新代码
+# 这里的 random 链接是为了确保每次 build 都会执行这一步，而不使用缓存
+ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
+RUN git pull origin master 
+
+# 2. 关键：同步并更新子模块到最新状态
+# --init 确保如果目录没初始化就初始化，--recursive 处理嵌套子模块
+RUN git submodule sync --recursive && \
+    git submodule update --init --recursive
+
+# 3. 打印确认文件是否存在 (调试用)
+RUN ls -la tools/performance_monitor/requirements.txt
+
+# 4. 执行安装
+WORKDIR /app/TradeSystem/tools/performance_monitor
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# 🔥 Expose the port that FastAPI will run on
+EXPOSE 8080
+
+
+
+# 确保交易系统的 output 目录有执行权限
+RUN mkdir -p /app/TradeSystem/output && chmod -R 777 /app/TradeSystem
+
+# 启动脚本改进：
+# 使用 0.0.0.0 才能让容器外的请求进入
+CMD ["python3", "-m", "uvicorn", "server_main.py:app", "--host", "0.0.0.0", "--port", "8080"]
