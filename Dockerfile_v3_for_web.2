@@ -40,11 +40,6 @@ RUN git clone https://github.com/Celia2024-bit/TradeSystem.git
 # 🔥 Change to the repository directory
 WORKDIR /app/TradeSystem
 
-# 1. 强制打破缓存并拉取主仓库最新代码
-# 这里的 random 链接是为了确保每次 build 都会执行这一步，而不使用缓存
-ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
-RUN git pull origin master 
-
 # 2. 关键：同步并更新子模块到最新状态
 # --init 确保如果目录没初始化就初始化，--recursive 处理嵌套子模块
 RUN git submodule sync --recursive && \
