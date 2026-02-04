@@ -66,5 +66,4 @@ EXPOSE 8080
 RUN mkdir -p /app/TradeSystem/output && chmod -R 777 /app/TradeSystem
 
 # 启动脚本改进：
-# 使用 0.0.0.0 才能让容器外的请求进入
-CMD ["python3", "-m", "uvicorn", "server_main.py:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python3", "-m", "uvicorn", "server_main:app", "--host", "0.0.0.0", "--port", "8080"]
