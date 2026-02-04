@@ -11,14 +11,14 @@ ifeq ($(OS),Windows_NT)
     # Windows 平台 (不管是手动还是网页触发)
     TARGET_SUFFIX = .exe
     PLATFORM_LIBS = -lws2_32 -lstdc++fs
-    CXXFLAGS += -DPLATFORM_WINDOWS=1 -fexec-charset=GBK
+    PF_FLAGS += -DPLATFORM_WINDOWS=1 -fexec-charset=GBK
     # 强制指定输出目录创建命令
     MKDIR_P = if not exist $(OUTPUT_DIR) mkdir $(OUTPUT_DIR)
 else
     # Linux 平台
     TARGET_SUFFIX =
     PLATFORM_LIBS = 
-    CXXFLAGS += -DPLATFORM_LINUX=1
+    PF_FLAGS += -DPLATFORM_LINUX=1
     MKDIR_P = mkdir -p $(OUTPUT_DIR)
 endif
 
@@ -28,7 +28,7 @@ endif
 # -pthread: Link with the POSIX threads library (essential for std::thread, std::mutex, etc.)
 # -g: Include debugging information
 # -O0: No optimization (good for debugging, change to -O2 or -O3 for release)
-CXXFLAGS = -std=c++17 -Wall -Wextra -pthread -g -O0
+CXXFLAGS = -std=c++17 -Wall -Wextra -pthread -g -O0 $(PF_FLAGS)
 
 # Name of the final executable
 TARGET_NAME = trading_system
