@@ -7,16 +7,19 @@ CXX = g++
 UNAME_S := $(shell uname -s)
 
 
-ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
-    # Windows MinGW
+ifeq ($(OS),Windows_NT)
+    # Windows 平台 (不管是手动还是网页触发)
     TARGET_SUFFIX = .exe
-    PLATFORM_LIBS = -lws2_32 -lstdc++fs  # 网络+filesystem
+    PLATFORM_LIBS = -lws2_32 -lstdc++fs
     CXXFLAGS += -DPLATFORM_WINDOWS=1 -fexec-charset=GBK
+    # 强制指定输出目录创建命令
+    MKDIR_P = if not exist $(OUTPUT_DIR) mkdir $(OUTPUT_DIR)
 else
-    # Linux/Mac
+    # Linux 平台
     TARGET_SUFFIX =
-    PLATFORM_LIBS =
+    PLATFORM_LIBS = 
     CXXFLAGS += -DPLATFORM_LINUX=1
+    MKDIR_P = mkdir -p $(OUTPUT_DIR)
 endif
 
 # Compiler flags
