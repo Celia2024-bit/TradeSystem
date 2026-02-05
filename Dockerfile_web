@@ -1,8 +1,7 @@
-# 基础环境保持不变
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 安装基础环境 [cite: 1]
+# 1. 安装基础环境 [cite: 1, 4]
 RUN apt-get update && apt-get install -y \
     git \
     net-tools \
@@ -11,29 +10,25 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip && \
     pip3 install --no-cache-dir pyyaml jinja2 requests psutil pandas matplotlib ccxt && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* [cite: 1, 2, 4]
 
-RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/python3 /usr/bin/python [cite: 2, 4]
 
-# 1. 设置工作目录为 /app
 WORKDIR /app
 
-# 2. 把 Render 拉取的 GitHub 代码（仓库根目录）全部考入 /app
-COPY . .
+# 2. 直接克隆仓库到当前目录 (.)，确保包含 .git 文件夹 
+RUN git clone https://github.com/Celia2024-bit/TradeSystem.git . 
 
-# 3. 此时你就在仓库根目录，直接初始化子模块即可 
-RUN git submodule update --init --recursive
+# 3. 更新子模块 
+RUN git submodule update --init --recursive [cite: 2, 5]
 
-# 4. 安装监控工具的依赖 
-# 这里的路径必须相对于 /app
-RUN pip3 install --no-cache-dir -r tools/performance_monitor/requirements.txt
+# 4. 安装监控工具依赖 [cite: 3, 5]
+RUN pip3 install --no-cache-dir -r tools/performance_monitor/requirements.txt 
 
-# 5. 确保 output 目录存在并有权限 
-RUN mkdir -p output && chmod -R 777 /app
+# 5. 设置权限 [cite: 3, 5]
+RUN mkdir -p output && chmod -R 777 /app 
 
-# 6. 暴露端口 (Render 自动处理映射，但显式写出是好习惯) 
+# 6. 端口与启动命令 [cite: 3, 5]
 EXPOSE 8080
-
-# 7. 动态读取 Render 提供的 $PORT 环境变量
-# 如果 $PORT 没定义，默认使用 8080
+# 使用这种写法可以同时兼容 Render 的动态端口和本地 8080 
 CMD python3 -m uvicorn server_main:app --host 0.0.0.0 --port ${PORT:-8080}
