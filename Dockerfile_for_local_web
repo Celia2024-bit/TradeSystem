@@ -37,8 +37,6 @@ WORKDIR /app
 # 🔥 Clone the TradeSystem repository
 RUN git clone https://github.com/Celia2024-bit/TradeSystem.git
 
-# 🔥 Change to the repository directory
-WORKDIR /app/TradeSystem
 
 # 2. 关键：同步并更新子模块到最新状态
 # --init 确保如果目录没初始化就初始化，--recursive 处理嵌套子模块
