@@ -503,6 +503,8 @@ The system features an integrated monitoring suite that captures real-time metri
 - **Trend Analysis**: Aggregates raw data into smooth trend lines to detect long-term resource leaks.
 - **Visual Reporting**: Automatically generates professional charts after each run.
 
+**🔴 Live Monitoring**: To view real-time system performance, visit the [Performance Monitoring Center](https://tools-lime-eight.vercel.app/)
+
 ### Quality Assurance
 
 #### Multi-layered Error Handling
