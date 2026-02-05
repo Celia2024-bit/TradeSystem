@@ -1,7 +1,7 @@
 FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 安装基础环境
+# 1. 安装基础环境 (包含 git 才能处理子模块)
 RUN apt-get update && apt-get install -y \
     git \
     net-tools \
@@ -9,32 +9,34 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     python3 \
     python3-pip && \
-    pip3 install --no-cache-dir pyyaml jinja2 requests psutil pandas matplotlib ccxt && \
+    pip3 install --no-cache-dir pyyaml jinja2 requests psutil pandas matplotlib ccxt uvicorn && \
     rm -rf /var/lib/apt/lists/*
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
+# 2. 设置主工作目录
 WORKDIR /app
 
-# 1. 直接克隆仓库到当前目录
-RUN git clone https://github.com/Celia2024-bit/TradeSystem.git .
+# 3. 克隆主仓库到 TradeSystem 文件夹
+RUN git clone https://github.com/Celia2024-bit/TradeSystem.git TradeSystem
 
-# 2. 更新子模块
+# 4. 进入仓库目录并更新子模块
+WORKDIR /app/TradeSystem
 RUN git submodule update --init --recursive
 
-# 3. 安装监控工具的依赖
+# 5. 安装监控工具的依赖
 RUN pip3 install --no-cache-dir -r tools/performance_monitor/requirements.txt
 
-# 4. 关键：设置工作目录到脚本所在位置
-# 这样 uvicorn 才能找到 server_main:app
-WORKDIR /app/tools/performance_monitor
+# 6. 设置工作目录到脚本所在位置 (修正了路径，加上了 TradeSystem 层级)
+WORKDIR /app/TradeSystem/tools/performance_monitor
 
-# 5. 确保 output 目录存在并有权限 (假设在仓库根目录)
-RUN mkdir -p /app/output && chmod -R 777 /app
+# 7. 确保 output 目录存在并有权限
+# 假设 output 在项目根目录，即 /app/TradeSystem/output
+RUN mkdir -p /app/TradeSystem/output && chmod -R 777 /app/TradeSystem/output
 
-# 6. 暴露端口
+# 8. 暴露端口
 EXPOSE 8080
 
-# 7. 启动命令
-# 由于 WORKDIR 已经切换到了目录，这里直接写 server_main:app 即可
-CMD python3 -m uvicorn server_main:app --host 0.0.0.0 --port ${PORT:-8080}
+# 9. 启动命令
+# 确保在当前 WORKDIR 下能找到 server_main.py
+CMD ["python3", "-m", "uvicorn", "server_main:app", "--host", "0.0.0.0", "--port", "8080"]
