@@ -15,7 +15,8 @@ StrategyEngine::StrategyEngine(SystemContext& ctx)
     
 }
 
-void StrategyEngine::closeSockets() {
+void StrategyEngine::closeSockets() 
+{
     // Actively close Sockets to interrupt accept/recv blocking
     if (client_fd_ != INVALID_SOCKET_VAL) {
         CLOSE_SOCKET(client_fd_);
@@ -133,7 +134,8 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
     PlatformUtils::flushConsole();
 }
 
-bool StrategyEngine::InitSocket() {
+bool StrategyEngine::InitSocket() 
+{
 #ifdef _WIN32
     WSADATA wsaData;
     return WSAStartup(MAKEWORD(2, 2), &wsaData) == 0;
@@ -142,7 +144,8 @@ bool StrategyEngine::InitSocket() {
 #endif
 }
 
-void StrategyEngine::HandleMessage(const std::string& jsonStr, TradeData& currentMarketData) {
+void StrategyEngine::HandleMessage(const std::string& jsonStr, TradeData& currentMarketData) 
+{
     try 
     {
         auto j = json::parse(jsonStr);

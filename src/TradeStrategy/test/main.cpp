@@ -20,7 +20,8 @@ LevelMapping customMappings = {
 };
 
 
-int main() {
+int main() 
+{
  
     LOGINIT(customMappings);
 
