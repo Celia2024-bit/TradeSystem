@@ -2,7 +2,7 @@
 #include <iomanip>
 using json = nlohmann::json;
 
-// 简化构造函数实现
+// Simplified constructor implementation
 StrategyEngine::StrategyEngine(SystemContext& ctx)
     : marketDataCtx_(ctx.marketData),
       actionSignalCtx_(ctx.actionSignal),
@@ -16,7 +16,7 @@ StrategyEngine::StrategyEngine(SystemContext& ctx)
 }
 
 void StrategyEngine::closeSockets() {
-    // 主动关闭Socket，打断accept/recv阻塞
+    // Actively close Sockets to interrupt accept/recv blocking
     if (client_fd_ != INVALID_SOCKET_VAL) {
         CLOSE_SOCKET(client_fd_);
         client_fd_ = INVALID_SOCKET_VAL;
@@ -29,13 +29,13 @@ void StrategyEngine::closeSockets() {
 
 void StrategyEngine::ProcessMarketDataAndGenerateSignals()
 {
-    // 1. 初始化Socket环境（跨平台）
+    // 1. Initialize Socket environment (cross-platform)
     if (!PlatformUtils::initSocketEnv()) {
         std::cerr << "Socket init failed\n";
         return;
     }
 
-    // 2. 创建监听Socket
+    // 2. Create listening Socket
     server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd_ == INVALID_SOCKET_VAL) {
         std::cerr << "[ERROR] Failed to create socket\n";
@@ -48,7 +48,7 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
     addr.sin_port = htons(9999);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    // 3. 绑定+监听
+    // 3. Bind + Listen
     if (bind(server_fd_, (sockaddr*)&addr, sizeof(addr)) < 0) {
         std::cerr << "[ERROR] Bind failed\n";
         CLOSE_SOCKET(server_fd_);
@@ -67,42 +67,42 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
            !systemState_.brokenFlag.load(std::memory_order_acquire))
     {
          TradeData currentMarketData; 
-        // 1. 处理连接：如果当前没有客户端，就执行 accept
+        // 1. Handle connection: if no client is currently connected, execute accept
         if (client_fd_ == INVALID_SOCKET_VAL) {
-            // 因为设置了超时，accept 会在这里最多阻塞 500ms
+            // Because timeout is set, accept will block here for a maximum of 500ms
             client_fd_ = accept(server_fd_, nullptr, nullptr);
             
             if (client_fd_ == INVALID_SOCKET_VAL) {
-                // 这里通常是超时了，直接进入下一轮循环检查 runningFlag
+                // Usually a timeout occurred, continue to the next loop to check runningFlag
                 continue; 
             }
 
-            // 成功连接后，给新创建的 client_fd_ 也设置超时
+            // After successful connection, set timeout for the newly created client_fd_ as well
             PlatformUtils::setSocketRecvTimeout(client_fd_, std::chrono::milliseconds(500));
             LOG(Strategy) << "Client connected successfully.";
         }
 
-        // 2. 接收数据：同样受 500ms 超时控制
+        // 2. Receive data: also controlled by the 500ms timeout
         int bytes = recv(client_fd_, recv_buf, sizeof(recv_buf), 0);
         
         if (bytes < 0) {
-            // 检查是否为超时错误 (EAGAIN/EWOULDBLOCK/WSAETIMEDOUT)
+            // Check if it is a timeout error (EAGAIN/EWOULDBLOCK/WSAETIMEDOUT)
             if (PlatformUtils::isSocketTimeout()) { 
                 continue; 
             }
-            // 真正的网络错误，重置连接
+            // Genuine network error, reset connection
             CLOSE_SOCKET(client_fd_);
             client_fd_ = INVALID_SOCKET_VAL;
             continue;
         } 
         else if (bytes == 0) {
-            // 客户端正常断开
+            // Client disconnected normally
             CLOSE_SOCKET(client_fd_);
             client_fd_ = INVALID_SOCKET_VAL;
             continue;
         }
 
-        // 6. 有有效数据：正常处理
+        // 6. Valid data received: process normally
         buffer.append(recv_buf, bytes);
 
         size_t pos;
@@ -114,21 +114,21 @@ void StrategyEngine::ProcessMarketDataAndGenerateSignals()
 
             LOG(Strategy) << " Received price: $" << std::fixed << std::setprecision(2)
             << currentMarketData.price_ << std::endl;
-            PlatformUtils::flushConsole(); // 跨平台刷新日志
+            PlatformUtils::flushConsole(); // Cross-platform console flush
 
             HandlePrice(currentMarketData.price_);
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
     }
     
-    // 7. 退出循环：清理所有Socket资源
+    // 7. Exit loop: cleanup all Socket resources
     if (client_fd_ != INVALID_SOCKET_VAL) {
         CLOSE_SOCKET(client_fd_);
     }
     if (server_fd_ != INVALID_SOCKET_VAL) {
         CLOSE_SOCKET(server_fd_);
     }
-    PlatformUtils::cleanupSocketEnv(); // 跨平台清理Socket环境
+    PlatformUtils::cleanupSocketEnv(); // Cross-platform Socket environment cleanup
     LOG(Strategy) << "StrategyEngine thread finished." ;
     PlatformUtils::flushConsole();
 }
@@ -177,7 +177,7 @@ void StrategyEngine::HandlePrice(double price)
         ActionSignal generatedActionSignal(generatedActionType, price, defaultTradeAmount);
 
         {
-            // 替换为上下文内的mutex
+            // Replace with the mutex inside the context
             std::lock_guard<std::mutex> lock(actionSignalCtx_.mutex);
             actionSignalCtx_.queue.enqueue(generatedActionSignal); 
             actionSignalCtx_.cv.notify_one();
