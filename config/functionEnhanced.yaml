@@ -1,7 +1,10 @@
 TradeExecutor.cpp:
   - bool TradeExecutor::HandleActionSignal(action, price, amount)
   - void TradeExecutor::DisplayPortfolioStatus(currentPrice)
+  - bool TradeExecutor::ExecuteSellOrder(price, amount)
   
 TradeStrategy\BollingerBandsStrategy.cpp:
   - double BollingerBandsStrategy::calculateStandardDeviation(prices, period)
   
+StrategyEngine.cpp:
+  - void StrategyEngine::ProcessMarketDataAndGenerateSignals()
