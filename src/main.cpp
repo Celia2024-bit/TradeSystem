@@ -43,7 +43,8 @@ class SystemManager {
 public:
     SystemManager() : stopFilePath_("./stop"){}
 
-    bool checkStopFile() const {
+    bool checkStopFile() const 
+	{
         PlatformUtils::flushConsole(); // 跨平台刷新输出
         bool exists = PlatformUtils::fileExists(stopFilePath_);
         PlatformUtils::flushConsole();
@@ -52,14 +53,16 @@ public:
     /**
      * @brief 删除stop文件（shutdown后清理）
      */
-    void removeStopFile() {
+    void removeStopFile() 
+	{
         PlatformUtils::flushConsole(); // 跨平台刷新输出
         PlatformUtils::deleteFile(stopFilePath_);
         PlatformUtils::flushConsole();
     }
 
     // 1. 启动阶段：只负责初始化
-    void startUp() {
+    void startUp() 
+	{
         auto& config = ConfigManager::instance();
         config.load("../config/config.cfg");
 
@@ -86,7 +89,8 @@ public:
     }
 
     // 2. 运行阶段：启动线程并进入监控
-    void run() {
+    void run() 
+	{
         // 将线程赋值给成员变量，这样 shutDown 随时能访问它们
         strategyThread_ = std::thread(&StrategyEngine::ProcessMarketDataAndGenerateSignals, strategyEngine_.get()); //
         tradeThread_ = std::thread(&TradeExecutor::RunTradeExecutionLoop, tradeExecutor_.get()); //
@@ -112,7 +116,8 @@ public:
     }
 
     // 3. 关闭阶段：现在是 Public，可以被 main 主动调用
-    void shutDown() {
+    void shutDown() 
+	{
         LOG(Main) << "SystemManager: Initiating ShutDown...";
         PlatformUtils::flushConsole();
 
@@ -156,7 +161,8 @@ private:
 };
 // --- Main 函数 ---
 
-int main() {
+int main() 
+{
     SystemManager manager;
     
     // 注册信号处理
