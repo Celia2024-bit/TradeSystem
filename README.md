@@ -70,15 +70,9 @@ pip3 install jinja2 pyyaml requests
 
 ### Configuration
 
-Edit `config/config.yaml` to customize:
+Edit `config/strategy_config.yaml` to customize: （Requires Rebuild)
 
 ```yaml
-# Trading Configuration
-tradeTime: 30                               # System runtime (seconds)
-maxHistory: 70                              # Price history window size
-minHistory: 10                              # Strategy activation threshold
-cash: 10000.0                               # Portfolio balance
-
 # Strategy Selection (uncomment desired strategy)
 selected_class: SimpleMovingAverageStrategy # Active algorithm
 # selected_class: BollingerBandsStrategy
@@ -89,7 +83,19 @@ obj_name: simpleMovingAverage               # Strategy instance name
 # obj_name: momentumRSI
 ```
 
-Edit `functionEnhanced.yaml` to adds parameter validation and error handling to existing C++ code:
+Edit `config/config.cfg` to customize:    (No Rebuild Required)
+
+```tsconfig
+# Trading Configuration
+RUN_DURATION=60
+DEFAULT_CASH=10000.0
+MAX_HISTORY=70
+MIN_HISTORY=10
+# 0=Main, 1=MarketData, 2=Strategy, 3=Execution, 4=DEBUG...
+LOG_LEVEL=0
+```
+
+Edit `functionEnhanced.yaml` to adds parameter validation and error handling to existing C++ code:   （Requires Rebuild)
 
 ##### Format
 
@@ -115,26 +121,52 @@ TradingStrategy.cpp:
 
 ### One-Command Deployment
 
+The system features a "Smart Automation" layer via `RunTradeSystem.py`. This script acts as the central orchestrator, managing the lifecycle of both C++ and Python components.
+
+### Automated Workflow
+
+By running a single command, the system automatically evaluates which parts of the environment need to be refreshed:
+
 ```bash
-# Recommended: Complete automated setup
-# Windows/Linux
-python3 RunTradeSystem.py
+# Windows or Linux
+python RunTradeSystem.py
 ```
 
-This single command:
+#### 1. The "Smart" Build Logic
 
-1. Runs strategy code generation based on config.yaml
-2. Updates configuration parameters from YAML (tradeTime, maxHistory, minHistory)
-3. Optionally enhances code with logging injection and parameter validation
-   - `run_script("utilLocal/CppLogInjector.py", interpreter="python3")` - Adds function entry/exit logging
-   - `run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])` - Adds parameter validation and exception handling
-4. Builds the optimized binary using make
-5. Starts the trading system (server) first
-6. Starts the market data feed (client) after server is ready
-7. Coordinates process timing with configurable timeout (tradeTime + 2 seconds)
-8. Handles graceful shutdown of both processes
+The script performs a dependency check and enhancement sequence:
 
-### Manual Deployment
+- **Static Config Check (`.yaml`):** If you changed the strategy in `strategy_config.yaml` or added functions to `functionEnhanced.yaml`, the script triggers:
+  
+  - **Code Generation:** Re-runs Jinja2 templates to update `StrategyWrapper.cpp`.
+  
+  - **Logic Injection:** Re-runs `Add_check_all.py` and `CppLogInjector.py` to bake safety and logging into the source.
+  
+  - **Compilation:** Calls `make all` to produce a new `trading_system` binary.
+
+- **Dynamic Config Check (`.cfg`):** If you only changed values in `config.cfg` (like `RUN_DURATION` or `LOG_LEVEL`), the script recognizes that the binary is already up-to-date and proceeds directly to execution, saving time.
+
+#### 2. Execution Orchestration
+
+Once the binary is ready, the script manages the multi-process startup sequence:
+
+1. **Launch Server:** Starts the C++ `trading_system`.
+
+2. **Attach Monitor:** Launches the Performance Monitor to track the PID of the C++ process.
+
+3. **Launch Client:** Starts `MarketFetch.py` to begin streaming Binance data via Sockets.
+
+4. **Graceful Shutdown:** After the `RUN_DURATION` (defined in `config.cfg`) expires, the script sends a signal to all processes to close cleanly and save logs.
+
+#### 3. Post-Run Analysis
+
+Immediately after the system stops, the deployment script:
+
+- Aggregates all logs into the `build_result/` folder.
+
+- Triggers `plot_performance.py` to generate visual reports (`.png`) of CPU and Memory usage.
+
+#### Manual Deployment
 
 ```bash
 # 1. Cleanup previous builds
@@ -142,7 +174,6 @@ rm -f src/*.cpp.bak src/TradeStrategy/*.cpp.bak
 
 # 2. Configuration and code generation
 python3 utilLocal/GenerateStrategy/generate_code.py
-python3 utilLocal/UserDefineYmalFile.py
 
 # 3. Optional enhancements
 python3 utilLocal/CppLogInjector.py
@@ -157,8 +188,10 @@ make clean && make all
 
 # Terminal 2: Market data feed (start after trading system is running)
 python3 src/MarketFetch.py
-```
 
+# Terminal 3: Performance Monitor (start after trading system is running)
+pythons tools/performance_monitor/run_monitor.py
+```
 
 ---
 
@@ -196,7 +229,9 @@ The Crypto Trading System implements a **hybrid multi-process architecture** com
 ```
 
 ### Performance Monitoring Layer
+
 The system now includes a non-intrusive monitoring suite located in `tools/performance_monitor/`:
+
 1. **run_monitor.py**: Attaches to the `trading_system` PID to collect high-frequency metrics.
 2. **plot_performance.py**: Post-processes CSV data into professional trend charts using Pandas and Matplotlib.
 3. **build_result/**: A centralized directory for all execution artifacts, including `raw_performance.csv` and performance PNG reports.
@@ -211,11 +246,15 @@ The system now includes a non-intrusive monitoring suite located in `tools/perfo
 - **Wait Management**: Sleep for WAIT_SECONDS (configurable from config.yaml)
 - **Final Reporting**: Display portfolio status and P&L from TradeExecutor
 
-**Key Constants (Auto-updated from config.yaml):**
+**Key Constants (Auto-updated from config/config.cfg):**  (Read from file)
 
-```cpp
-constexpr uint32_t WAIT_SECONDS = 30;        // From config.yaml tradeTime
-const double DEFAULT_CASH = 10000.0;         // Initial portfolio balance
+```editorconfig
+RUN_DURATION=60
+DEFAULT_CASH=10000.0
+MAX_HISTORY=70
+MIN_HISTORY=10
+# 0=Main, 1=MarketData, 2=Strategy, 3=Execution, 4=DEBUG...
+LOG_LEVEL=0
 ```
 
 #### Python Process: MarketFetch.py
@@ -241,8 +280,6 @@ params = {"symbol": "BTCUSDT"}
 - **Strategy Integration**: StrategyWrapper pattern with auto-generated strategy selection
 - **Signal Generation**: ActionSignal creation for trade recommendations sent to SafeQueue
 
-
-
 #### Thread 3: Trade Executor (C++)
 
 - **Signal Processing**: Consumes ActionSignal from SafeQueue
@@ -252,7 +289,7 @@ params = {"symbol": "BTCUSDT"}
 
 **Portfolio State Management:**
 
-```cpp
+```c
 class TradeExecutor {
     double initialFiatBalance_;     // Starting capital ($10,000)
     double currentFiatBalance_;     // Available cash
@@ -274,47 +311,51 @@ class TradeExecutor {
 - **Protocol**: TCP socket communication on localhost:9999
 - **Data Format**: JSON messages with newline delimiters
 
-```cpp
+```c
 // Connection: Python Client ←TCP→ C++ Server (localhost:9999)
 {"symbol": "BTC", "price": 29847.52, "timestamp": 1692284400.123}\n
 ```
+
 - **Direction**: Python MarketFetch.py (client) → C++ StrategyEngine (server)
 - **Purpose**: Real-time market data transmission
 
 #### 2. Intra-Process Communication (C++ Threads)
 
 - **Mechanism**: SafeQueue template with mutex and condition variables
+
 - **Direction**: StrategyEngine (Thread 2) → TradeExecutor (Thread 3)
+
 - **Data Type**: ActionSignal objects containing trade recommendations
+
 - **Thread Safety**: Blocking dequeue operations with proper synchronization
-```cpp
-template<typename T>
-class SafeQueue {
+  
+  ```c
+  template<typename T>
+  class SafeQueue {
     std::queue<T> queue_;
     std::mutex mutex_;
     std::condition_variable condition_;
-public:
+  public:
     void enqueue(const T& item);    // Thread-safe insertion
     T dequeue();                    // Thread-safe removal with blocking
     bool empty() const;             // Thread-safe size check
-};
-// Inter-thread communication via SafeQueue
-SafeQueue<ActionSignal> actionSignalQueue;
-// Thread 2: Strategy Engine enqueues signals
-ActionSignal signal{ActionType::BUY, price, amount, timestamp};
-actionSignalQueue.enqueue(signal);
-// Thread 3: Trade Executor dequeues and processes
-ActionSignal signal = actionSignalQueue.dequeue(); // Blocks until available
-```
-
-
+  };
+  // Inter-thread communication via SafeQueue
+  SafeQueue<ActionSignal> actionSignalQueue;
+  // Thread 2: Strategy Engine enqueues signals
+  ActionSignal signal{ActionType::BUY, price, amount, timestamp};
+  actionSignalQueue.enqueue(signal);
+  // Thread 3: Trade Executor dequeues and processes
+  ActionSignal signal = actionSignalQueue.dequeue(); // Blocks until available
+  ```
 
 ### Strategy Pattern Implementation
 
 #### Dynamic Strategy Selection via Code Generation
 
 The system uses Jinja2 templates to generate StrategyWrapper.cpp and StrategyWrapper.h based on config.yaml:
-```cpp
+
+```c
 // strategy_wrapper_impl.cpp.jinja2
 IStrategy* StrategyWrapper::strategy_ = nullptr;
 
@@ -327,7 +368,7 @@ void StrategyWrapper::initialize()
 }
 ```
 
-```cpp
+```c
 // Auto-generated StrategyWrapper.cpp
 IStrategy* StrategyWrapper::strategy_ = nullptr;
 
@@ -345,11 +386,11 @@ void StrategyWrapper::initialize() {
 - **BollingerBandsStrategy**: Mean reversion with volatility bands
 - **MomentumRSIStrategy**: Momentum-based relative strength analysis
 
-### Cross-Platform 
+### Cross-Platform
 
 #### Cross-Platform Build System Integration:
 
-```cpp
+```c
 # Cross-platform makefile supporting both Linux and Windows
 # Works with GCC on Linux and MinGW/MSVC on Windows
 
@@ -367,7 +408,7 @@ endif
 
 #### Cross-Platform Socket Implementation:
 
-```cpp
+```c
 #ifdef _WIN32
     #include 
     #define CLOSESOCKET closesocket
@@ -379,10 +420,10 @@ endif
 ```
 
 ---
+
 ## CI/CD Pipeline
 
 The project uses a **GitLab CI/CD pipeline** to automate the build, test, and deployment processes. The pipeline is defined in the `main.yml` file and consists of two main stages: `docker_build` and `build`. The pipeline is configured to run automatically for branches, merge requests, and web-initiated events.
-
 
 ### 1. Docker Build Stage
 
@@ -392,7 +433,6 @@ This stage is responsible for creating a custom Docker image to serve as the bui
 * **Image Creation:** The `build_image` job logs into the GitLab Container Registry, builds the Docker image from the Dockerfile, and tags it with both the commit SHA and the "latest" tag.
 * **Push to Registry:** After building, the job pushes the newly created image to the GitLab Container Registry for future use.
 
-
 ### 2. Build and Test Stage
 
 This stage uses the custom Docker image created in the previous stage to run the trading system's automated setup and testing scripts.
@@ -400,81 +440,71 @@ This stage uses the custom Docker image created in the previous stage to run the
 * **Job Image:** The `build_and_test` job uses the `latest` image from the GitLab Container Registry, which was just built.
 * **Execution:** It navigates to the project directory and executes `python RunTradeSystem.py`. [cite_start]This single command handles the entire process, from code generation and building the C++ binary to running the trading system and market data feed. [cite: 3]
 * **Artifacts:** The job is configured to save key output files as artifacts, which are retained for one week. These include:
-    * `result.txt`: The complete output of the trading system run.
-    * `parameter_check.log`: A log of any parameter validation errors.
-    * `error.log`: A log for tracking runtime exceptions.
+  - **build_result/result.txt**: Standard output and trading logs.
+  - **build_result/market_data.csv**: Captured price data from Binance.
+  - **build_result/report_raw_detail.png**: Detailed line charts showing second-by-second resource fluctuations.
+  - **build_result/report_trend_summary.png**: Aggregated trend chart highlighting overall system stability and memory growth patterns.
 
 ---
 
-## Enhancement Tools & Automation
+## 🛠 Development Tools & Automation
 
-The project includes a suite of Python-based tools to automate and enhance the development pipeline, from code generationto adding advanced features like logging and validation.
+To achieve high engineering maturity and system reliability, I implemented a suite of Python-based automation tools. This "Infrastructure as Code" approach eliminates manual repetition and enforces rigorous safety standards.
 
-#### CppLogInjector.py
-This tool automatically injects logging statements at the entry and exit points of C++ functions, providing detailed execution tracing without manual code changes.
+### **1. Automated Defensive Guardrails (`Add_check_all.py`)**
 
-```cpp
-// Before transformation
-bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
-{
-    // Original logic
-}
+Instead of manually wrapping hundreds of functions, this orchestration tool automatically injects a non-invasive defensive layer based on `functionEnhanced.yaml`.
 
-// After transformation
-bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
-{
-    LOG(CustomerLogLevel::INFO) << " This is start of " << __FILE__ << "::" << __FUNCTION__;
-    // Original logic
-    LOG(CustomerLogLevel::INFO) << " This is stop of " << __FILE__ << "::" << __FUNCTION__;
-} 
-```
+- **Static Analysis & Injection**: Parses C++ source files to inject `check_all` validation headers and wraps core logic in `try-catch` blocks.
 
-#### Add_check_all.py
-Based on `functionEnhanced.yaml`, this script enhances specified C++ functions with automated parameter validation and try-catch blocks for robust exception handling.
-- **Parameter Validation**: Automatically injects `check_all()` function calls
-- **Error Handling**: Wraps existing code with comprehensive try-catch blocks
-- **File Safety**: Creates backup files (`.bak`) before modification
-- **Smart Detection**: Avoids duplicate additions if code is already enhanced
-- **Logging Integration**: Automatic error logging to `error.log` and `parameter_check.log`
+- **Compile-Time Type Dispatching**: The core engine (`ParameterCheck.h`) utilizes **C++17 `if constexpr`** for zero-overhead validation.
 
-```cpp
-template <typename... Args>
-bool check_all(const std::string& functionName, Args&&... args)
-{
-    // Validates all parameters and logs errors
-    // Returns false if any parameter fails validation
-}
-```
-```cpp
-// Before transformation
-bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
-{
-    // Original logic
-}
+- **Fail-Fast Mechanism**: Uses `static_assert` to catch unsupported types during compilation, preventing unprotected data from entering the trading loop.
+
+```c
+// Logic automatically injected by Add_check_all.py
 bool TradeExecutor::ExecuteBuyOrder(double price, double amount) {
-    if (!check_all("TradeExecutor::ExecuteBuyOrder", price, amount)) 
-    {
-        std::cerr << "Invalid parameters in TradeExecutor::ExecuteBuyOrder! See parameter_check.log for details" << std::endl;
-        return false;
-    }
-    try 
-    {
-        // Original function logic
-    }
-    catch (const std::exception& e) 
-    {
+    if (!check_all("ExecuteBuyOrder", price, amount)) return false; // Zero-cost validation
+    try {
+        /* Original trading logic */
+    } catch (const std::exception& e) {
         ErrorLogger::LogError("TradeExecutor", "ExecuteBuyOrder", "std::exception", e.what());
-        std::cerr << "Exception in TradeExecutor::ExecuteBuyOrder! See error.log for details." << std::endl;
-        return false;
-    }
-    catch (...) 
-    {
-        ErrorLogger::LogError("TradeExecutor", "ExecuteBuyOrder", "Unknown", "Unspecified error");
-        std::cerr << "Unknown exception in TradeExecutor::ExecuteBuyOrder! See error.log for details." << std::endl;
         return false;
     }
 }
 ```
+
+### **2. Automated Execution Tracing (`CppLogInjector.py`)**
+
+Provides "transparent" observability across the multi-threaded system without manual code changes.
+
+- **Instrumentation**: Automatically injects entry (`start`) and exit (`stop`) logging statements at the scope boundaries of C++ functions.
+
+- **Traceability**: Enables microsecond-level tracking of the execution flow across market data, strategy, and execution threads.
+  
+  ```c
+  // Before transformation
+  bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
+  {
+      // Original logic
+  }
+  
+  // After transformation
+  bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
+  {
+      LOG(CustomerLogLevel::INFO) << " This is start of " << __FILE__ << "::" << __FUNCTION__;
+      // Original logic
+      LOG(CustomerLogLevel::INFO) << " This is stop of " << __FILE__ << "::" << __FUNCTION__;
+  }
+  ```
+
+### **3. Smart Build & Orchestration (`RunTradeSystem.py`)**
+
+A central orchestrator that manages the entire system lifecycle:
+
+- **Dependency-Aware Rebuilds**: Detects changes in `.yaml` or `.cfg` files to trigger code generation (Jinja2) or logic injection only when necessary.
+
+- **Multi-Process Coordination**: Synchronizes the startup of the C++ Server, Python Market Client, and the Real-time Performance Monitor.
 
 ## Performance & Testing
 
@@ -497,6 +527,7 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount) {
 - **Data Frequency**: 1-second intervals from Binance API
 
 ### Automated Performance Auditing
+
 The system features an integrated monitoring suite that captures real-time metrics during execution.
 
 - **High-Frequency Monitoring**: Tracks CPU, Memory, and System Handles every second.
@@ -504,23 +535,6 @@ The system features an integrated monitoring suite that captures real-time metri
 - **Visual Reporting**: Automatically generates professional charts after each run.
 
 **🔴 Live Monitoring**: To view real-time system performance, visit the [Performance Monitoring Center](https://tools-lime-eight.vercel.app/)
-
-### Quality Assurance
-
-#### Multi-layered Error Handling
-
-1. **Parameter Validation**: Template-based type checking with ParameterCheck.h
-2. **Exception Handling**: Try-catch blocks with ErrorLogger
-3. **Network Level**: API failures, socket disconnections, timeout handling
-4. **Application Level**: Insufficient funds, invalid trade amounts, strategy failures
-
-#### Output Files & Reports
-- **parameter_check.log**: Parameter validation errors
-- **error.log**: Runtime exception tracking with timestamps
-- **build_result/result.txt**: Standard output and trading logs.
-- **build_result/market_data.csv**: Captured price data from Binance.
-- **build_result/report_raw_detail.png**: Detailed line charts showing second-by-second resource fluctuations.
-- **build_result/report_trend_summary.png**: Aggregated trend chart highlighting overall system stability and memory growth patterns.
 
 ---
 
