@@ -214,15 +214,16 @@ pip3 install jinja2 pyyaml requests</code></pre>
 
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-6">
                         <h3 class="text-xl font-semibold mb-3">Configuration</h3>
-                        <h4 class="text-l font-semibold mb-3">config/config.yaml</h4>
-                        <p>Edit <code>config/config.yaml</code> to customize:</p>
+                        <h4 class="text-l font-semibold mb-3">config/config.cfg</h4>
                         <pre class="language-yml"><code style="font-size: 0.8em;"># Trading Configuration
-tradeTime: 30                    # System runtime (seconds)
-maxHistory: 70                   # Price history window size
-minHistory: 10                   # Strategy activation threshold
-cash: 10000.0                    # Portfolio balance
-
-# Strategy Selection (uncomment desired strategy)
+tradeTime=30                    # System runtime (seconds)
+maxHistory=70                   # Price history window size
+minHistory=10                   # Strategy activation threshold
+cash=10000.0                    # Portfolio balance
+LOG_LEVEL=0                      # 0=Main, 1=MarketData, 2=Strategy, 3=Execution, 4=DEBUG...
+</code></pre>
+                        <h4 class="text-l font-semibold mb-3">config/strategy_config.yaml</h4>
+                        <pre class="language-yml"><code style="font-size: 0.8em;"># Strategy Selection (uncomment desired strategy)
 selected_class: SimpleMovingAverageStrategy # Active algorithm
 # selected_class: BollingerBandsStrategy
 # selected_class: MomentumRSIStrategy
@@ -269,7 +270,10 @@ make clean && make all
 ./output/trading_system
 
 # Terminal 2: Market data feed (start after trading system is running)
-python3 src/MarketFetch.py</code></pre>
+python3 src/MarketFetch.py
+
+# Terminal 3: Performance Monitor (start after trading system is running)
+pythons tools/performance_monitor/run_monitor.py</code></pre>
                  </div>
  
                 <div class="grid md:grid-cols-2 gap-8">
