@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # === Read YAML configuration ===
-with open('./config/config.yaml', 'r') as f:
+with open('./config/strategy_config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
 selected_class = config.get('selected_class', '')
