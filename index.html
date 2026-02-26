@@ -513,52 +513,118 @@ bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
     LOG(CustomerLogLevel::INFO) << " This is stop of " << __FILE__ << "::" << __FUNCTION__;
 } </code></pre>
                 </div>
+
                 <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                     <h3 class="text-xl font-semibold mb-4">Add_check_all.py</h3>
-                    <p class="mb-4 text-slate-700">Based on `functionEnhanced.yaml`, this script enhances specified C++ functions with automated parameter validation and try-catch blocks for robust exception handling.</p>
+
+                    <!-- Design Philosophy -->
+                    <blockquote class="border-l-4 border-blue-400 pl-4 mb-5 bg-blue-50 py-2 pr-2 rounded-r text-slate-600 italic text-sm leading-relaxed">
+                        <strong class="not-italic text-blue-600">Design Philosophy —</strong>
+                        A <strong class="not-italic">centralized, non-invasive validation core</strong> for the trading system, targeting one-stop integration and high extensibility.
+                        By combining C++17 compile-time type-dispatch with Python automation, complex validation is injected into hundreds of mission-critical functions instantly —
+                        zero changes to existing business logic required.
+                    </blockquote>
+
+                    <!-- Three Pillars -->
+                    <div class="grid grid-cols-3 gap-3 mb-5">
+                        <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                            <div class="text-base mb-1">⚡</div>
+                            <div class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Primitive Validation</div>
+                            <div class="text-xs text-slate-600 leading-relaxed">
+                                Uses <code>if constexpr</code> for compile-time dispatch — zero runtime overhead.<br><br>
+                                • <strong>Integrals</strong>: positivity check<br>
+                                • <strong>Floats</strong>: <code>std::isfinite</code> blocks NaN/∞<br>
+                                • <strong>Pointers</strong>: nullptr guard
+                            </div>
+                        </div>
+                        <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                            <div class="text-base mb-1">🧩</div>
+                            <div class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Domain Objects</div>
+                            <div class="text-xs text-slate-600 leading-relaxed">
+                                Handles complex types <em>without touching business logic</em>.<br><br>
+                                • <strong>Enums</strong> (<code>ActionType</code>): range gate<br>
+                                • <strong>Structs</strong> (<code>ActionSignal</code>): recursive validation<br>
+                                • <strong>STL Containers</strong>: non-empty guard
+                            </div>
+                        </div>
+                        <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                            <div class="text-base mb-1">🔒</div>
+                            <div class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">Fail-Fast Design</div>
+                            <div class="text-xs text-slate-600 leading-relaxed">
+                                <code>static_assert</code> triggers compile-time error on unsupported types.<br><br>
+                                Adding a new variable = one branch in <code>ParameterCheck.h</code>.
+                                Python script scales injection to 100s of functions instantly.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feature List -->
+                    <p class="mb-4 text-slate-700">Based on <code>functionEnhanced.yaml</code>, this script enhances specified C++ functions with automated parameter validation and try-catch blocks for robust exception handling.</p>
                     <ul class="text-slate-700 list-disc ml-6 space-y-2">
-                        <li style="font-size:14px;"><strong>Parameter Validation</strong>: Automatically injects `check_all()` function calls</li>
+                        <li style="font-size:14px;"><strong>Parameter Validation</strong>: Automatically injects <code>check_all()</code> function calls</li>
                         <li style="font-size:14px;"><strong>Error Handling</strong>: Wraps existing code with comprehensive try-catch blocks</li>
-                        <li style="font-size:14px;"><strong>File Safety</strong>: Creates backup files (`.bak`) before modification</li>
+                        <li style="font-size:14px;"><strong>File Safety</strong>: Creates backup files (<code>.bak</code>) before modification</li>
                         <li style="font-size:14px;"><strong>Smart Detection</strong>: Avoids duplicate additions if code is already enhanced</li>
-                        <li style="font-size:14px;"><strong>Logging Integration</strong>: Automatic error logging to `error.log` and `parameter_check.log`</li>
+                        <li style="font-size:14px;"><strong>Logging Integration</strong>: Automatic error logging to <code>error.log</code> and <code>parameter_check.log</code></li>
+                        <li style="font-size:14px;"><strong>Zero Business Logic Change</strong>: Non-invasive injection preserves original function semantics</li>
                     </ul>
+
+                    <!-- Code: Template -->
                     <pre class="language-cpp"><code style="font-size: 0.7em;">template &lt;typename... Args&gt;
 bool check_all(const std::string& functionName, Args&&... args)
 {
-    // Validates all parameters and logs errors
-    // Returns false if any parameter fails validation
+    // if constexpr dispatches at compile time:
+    //   integral       → positivity check
+    //   float/double   → std::isfinite + positivity
+    //   pointer        → nullptr check
+    //   enum / struct  → domain-specific rules in ParameterCheck.h
+    // Logs to parameter_check.log, returns false on any violation.
 }
                     </code></pre>
-                    <pre class="language-cpp"><code style="font-size: 0.7em;">// Before transformation
-bool TradeExecutor::ExecuteBuyOrder(double price, double amount) 
+
+                    <!-- Code: Before / After -->
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-4 mb-1">Before transformation</p>
+                    <pre class="language-cpp"><code style="font-size: 0.7em;">bool TradeExecutor::ExecuteBuyOrder(double price, double amount)
 {
-    // Original logic
+    // Original logic — no validation, no error handling
 }
-bool TradeExecutor::ExecuteBuyOrder(double price, double amount) {
-    if (!check_all("TradeExecutor::ExecuteBuyOrder", price, amount)) 
+                    </code></pre>
+
+                    <p class="text-xs font-semibold text-green-500 uppercase tracking-wide mt-4 mb-1">After — auto-enhanced by Add_check_all.py</p>
+                    <pre class="language-cpp"><code style="font-size: 0.7em;">bool TradeExecutor::ExecuteBuyOrder(double price, double amount) {
+    if (!check_all("TradeExecutor::ExecuteBuyOrder", price, amount))
     {
-        std::cerr << "Invalid parameters in TradeExecutor::ExecuteBuyOrder! See parameter_check.log for details" << std::endl;
+        std::cerr &lt;&lt; "Invalid parameters in TradeExecutor::ExecuteBuyOrder! See parameter_check.log for details" &lt;&lt; std::endl;
         return false;
     }
-    try 
+    try
     {
         // Original function logic
     }
-    catch (const std::exception& e) 
+    catch (const std::exception& e)
     {
         ErrorLogger::LogError("TradeExecutor", "ExecuteBuyOrder", "std::exception", e.what());
-        std::cerr << "Exception in TradeExecutor::ExecuteBuyOrder! See error.log for details." << std::endl;
+        std::cerr &lt;&lt; "Exception in TradeExecutor::ExecuteBuyOrder! See error.log for details." &lt;&lt; std::endl;
         return false;
     }
-    catch (...) 
+    catch (...)
     {
         ErrorLogger::LogError("TradeExecutor", "ExecuteBuyOrder", "Unknown", "Unspecified error");
-        std::cerr << "Unknown exception in TradeExecutor::ExecuteBuyOrder! See error.log for details." << std::endl;
+        std::cerr &lt;&lt; "Unknown exception in TradeExecutor::ExecuteBuyOrder! See error.log for details." &lt;&lt; std::endl;
         return false;
     }
 }
                     </code></pre>
+
+                    <!-- Impact Tags -->
+                    <div class="flex flex-wrap gap-2 mt-5 pt-4 border-t border-slate-200 items-center">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wide mr-1">Engineering Impact</span>
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">C++17 if constexpr</span>
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-mono">Zero Runtime Overhead</span>
+                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-mono">Recursive Domain Validation</span>
+                        <span class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-mono">Compile-time Fail-Fast</span>
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-mono">100s of Functions Automated</span>
+                    </div>
                 </div>
 
             </section>
