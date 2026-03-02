@@ -20,7 +20,7 @@ public:
         }
     }
 
-    // 统一转成 double，用的时候再强转 int，最省事
+    // Unified conversion to double; cast to int when used, for simplicity
     double get(const std::string& key, double def = 0) {
         return data.count(key) ? std::stod(data[key]) : def;
     }

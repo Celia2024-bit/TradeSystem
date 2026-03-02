@@ -4,7 +4,7 @@
 #include "pch.h"
 #include "StrategyWrapper.h"
 #include "json.hpp"
-#include "SystemContext.h" // 引入封装的上下文
+#include "SystemContext.h" 
 
 
 #include "../util/PlatformUtils.h"
@@ -26,7 +26,7 @@
 class StrategyEngine
 {
 private:
-    // 替换分散的成员变量为上下文引用
+    // Replace dispersed member variables with context references
     MarketDataContext& marketDataCtx_;       
     ActionSignalContext& actionSignalCtx_;  
     SystemState& systemState_;
@@ -41,7 +41,7 @@ private:
     void HandleMessage(const std::string& jsonStr, TradeData& currentMarketData);
 public:
     StrategyEngine() = delete;
-    // 简化构造函数：仅接收全局上下文
+    // Simplified constructor: only receives global context
     explicit StrategyEngine(SystemContext& ctx);
 
     void ProcessMarketDataAndGenerateSignals();

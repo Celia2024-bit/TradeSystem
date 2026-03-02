@@ -9,19 +9,21 @@
 #include "SystemContext.h"
 #include "../util/PlatformUtils.h"
 
-// 线程函数声明
+// Thread function declarations
 void strategy_engine_thread_func(std::shared_ptr<StrategyEngine> strategyEngine);
 void trade_execution_thread_func(std::shared_ptr<TradeExecutor> tradeExecutor);
-// 全局退出标志（确保跨线程可见）
+
+// Global stop flag (ensures visibility across threads)
 std::atomic<bool> g_external_stop(false);
+
 void signalHandler(int signum) {
     (void) signum;
     g_external_stop.store(true, std::memory_order_release);
     std::cout << "[SIGNAL] Ctrl+C detected, initiating shutdown..." << std::endl;
-    PlatformUtils::flushConsole(); // 强制打印日志
+    PlatformUtils::flushConsole(); // Force print logs
 }
 
-// 自定义日志映射
+// Custom log mapping
 LevelMapping customMappings = {
     {Main,        "Main"},
     {MarketData,  "Market Data"},
@@ -33,36 +35,36 @@ LevelMapping customMappings = {
     {ERROR,       "ERROR"}
 };
 
-// --- 新增拆分函数 ---
+// --- New Split Functions ---
 
 /**
- * @brief 系统启动初始化
- * 负责：加载配置、初始化日志、设置系统上下文、创建核心组件
+ * @brief System Startup Initialization
+ * Responsible for: Loading config, initializing logs, setting system context, creating core components
  */
 class SystemManager {
 public:
     SystemManager() : stopFilePath_("./stop"){}
 
     bool checkStopFile() const 
-	{
-        PlatformUtils::flushConsole(); // 跨平台刷新输出
+    {
+        PlatformUtils::flushConsole(); // Cross-platform flush output
         bool exists = PlatformUtils::fileExists(stopFilePath_);
         PlatformUtils::flushConsole();
         return exists;
     }
     /**
-     * @brief 删除stop文件（shutdown后清理）
+     * @brief Remove stop file (cleanup after shutdown)
      */
     void removeStopFile() 
-	{
-        PlatformUtils::flushConsole(); // 跨平台刷新输出
+    {
+        PlatformUtils::flushConsole(); // Cross-platform flush output
         PlatformUtils::deleteFile(stopFilePath_);
         PlatformUtils::flushConsole();
     }
 
-    // 1. 启动阶段：只负责初始化
+    // 1. Startup phase: Only responsible for initialization
     void startUp() 
-	{
+    {
         auto& config = ConfigManager::instance();
         config.load("../config/config.cfg");
 
@@ -73,7 +75,7 @@ public:
         int levelInt = static_cast<int>(config.get("LOG_LEVEL", 0));
         CustomerLogLevel selectedLevel = static_cast<CustomerLogLevel>(levelInt);
 
-        // 2. 初始化日志
+        // 2. Initialize logs
         LOGINIT(customMappings);
         Logger::getInstance().setLevel(selectedLevel);
         Logger::getInstance().setFormatter([](const LogMessage& msg) {
@@ -81,25 +83,25 @@ public:
           ss << msg.levelName << " :: " << msg.message;
           return ss.str();
         });
-        strategyEngine_ = std::make_shared<StrategyEngine>(ctx_); //
-        tradeExecutor_  = std::make_shared<TradeExecutor>(ctx_); //
+        strategyEngine_ = std::make_shared<StrategyEngine>(ctx_);
+        tradeExecutor_  = std::make_shared<TradeExecutor>(ctx_);
 
         removeStopFile();
         LOG(Main) << "SystemManager: StartUp complete.";
     }
 
-    // 2. 运行阶段：启动线程并进入监控
+    // 2. Running phase: Start threads and enter monitoring
     void run() 
-	{
-        // 将线程赋值给成员变量，这样 shutDown 随时能访问它们
-        strategyThread_ = std::thread(&StrategyEngine::ProcessMarketDataAndGenerateSignals, strategyEngine_.get()); //
-        tradeThread_ = std::thread(&TradeExecutor::RunTradeExecutionLoop, tradeExecutor_.get()); //
+    {
+        // Assign threads to member variables so shutDown can access them at any time
+        strategyThread_ = std::thread(&StrategyEngine::ProcessMarketDataAndGenerateSignals, strategyEngine_.get());
+        tradeThread_ = std::thread(&TradeExecutor::RunTradeExecutionLoop, tradeExecutor_.get());
 
         LOG(Main) << "Threads started. Entering monitoring loop...";
 
         {
             std::unique_lock<std::mutex> lock(ctx_.state.brokenMutex);
-            // 监控循环：直到时间到、外部停止或系统崩溃
+            // Monitoring loop: Until time is up, external stop, or system crash
             while (!ctx_.state.brokenFlag.load() && !g_external_stop.load()) {
                 if (checkStopFile()) {
                     LOG(Main) << "Stop file detected: " << stopFilePath_;
@@ -111,38 +113,38 @@ public:
             }
         }
         
-        // 监控结束，自动调用关闭
+        // Monitoring finished, automatically call shutdown
         shutDown();
     }
 
-    // 3. 关闭阶段：现在是 Public，可以被 main 主动调用
+    // 3. Shutdown phase: Now public, can be actively called by main
     void shutDown() 
-	{
+    {
         LOG(Main) << "SystemManager: Initiating ShutDown...";
         PlatformUtils::flushConsole();
 
-        // 1. 设置退出标志（让子线程检测到）
+        // 1. Set exit flag (for child threads to detect)
         ctx_.state.runningFlag.store(false, std::memory_order_release);
         
-        // 2. 关闭StrategyEngine的Socket（打断accept/recv阻塞）
+        // 2. Close StrategyEngine Sockets (interrupt accept/recv blocking)
         if (strategyEngine_) {
-            strategyEngine_->closeSockets(); // 新增：关闭监听/客户端Socket
+            strategyEngine_->closeSockets(); // Added: close listening/client sockets
         }
 
-        // 3. 等待TradeExecutor线程退出
+        // 3. Wait for TradeExecutor thread to exit
         if (tradeThread_.joinable()) {
             tradeThread_.join();
             LOG(Main) << "TradeExecutor thread joined.";
         }
 
-        // 4. 等待StrategyEngine线程退出
-        if (strategyThread_.joinable()) { // 假设你有strategyEngineThread_线程变量
+        // 4. Wait for StrategyEngine thread to exit
+        if (strategyThread_.joinable()) { 
             strategyThread_.join();
             LOG(Main) << "StrategyEngine thread joined.";
         }
 
-        double price = tradeExecutor_->GetCurrentPrice(); //
-        tradeExecutor_->DisplayPortfolioStatus(price); //
+        double price = tradeExecutor_->GetCurrentPrice();
+        tradeExecutor_->DisplayPortfolioStatus(price);
         removeStopFile();
         LOG(Main) << "SystemManager: ShutDown complete.";
         PlatformUtils::flushConsole();
@@ -153,19 +155,20 @@ private:
     std::shared_ptr<StrategyEngine> strategyEngine_;
     std::shared_ptr<TradeExecutor> tradeExecutor_;
     
-    // 定义为成员变量，解决局部变量无法跨函数访问的问题
+    // Defined as member variables to solve local scope access issues
     std::thread strategyThread_;
     std::thread tradeThread_;
     
-    std::string stopFilePath_;  ;
+    std::string stopFilePath_;
 };
-// --- Main 函数 ---
+
+// --- Main Function ---
 
 int main() 
 {
     SystemManager manager;
     
-    // 注册信号处理
+    // Register signal handler
     signal(SIGINT, signalHandler); 
 
     manager.startUp();

@@ -47,17 +47,17 @@ def fetch_price():
 
 def get_market_data():
     """
-    根据环境决定获取数据的方式
+    Decide data acquisition method based on environment
     """
-    # 检查是否在 GitHub Actions 运行
+    # Check if running in GitHub Actions
     is_ci_env = os.environ.get('GITHUB_ACTIONS') == 'true'
 
     if is_ci_env:
-        # 在 CI/CD 环境下直接使用模拟数据，避免网络报错
+        # In CI/CD environment, use simulated data directly to avoid network errors
         print("[INFO] Running in CI/CD environment, using simulated data.")
         return fetch_price()
     else:
-        # 在本地环境下，先尝试获取真实币安价格
+        # In local environment, try to fetch real Binance price first
         data = fetch_price_binance()
         if data:
             return data
@@ -79,7 +79,7 @@ def write_csv():
 def start_sender():
     global flush_counter
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # 增加重试机制，防止 C++ Server 还没准备好就 Connect 失败
+    # Added retry mechanism to prevent connection failure if C++ Server is not yet ready
     connected = False
     while not connected:
         try:
@@ -90,7 +90,7 @@ def start_sender():
             time.sleep(1)
 
     while True:
-        # 使用包装后的函数替换原来的 fetch_price_binance
+        # Replace original fetch_price_binance with the wrapped function
         data = get_market_data()
         if data is None:
             print("[SKIP] No valid data to send")

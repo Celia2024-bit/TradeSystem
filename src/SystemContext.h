@@ -7,21 +7,21 @@
 #include <mutex>
 #include <condition_variable>
 
-// 封装市场数据队列及同步组件
+// Encapsulates market data queue and synchronization components
 struct MarketDataContext {
     SafeQueue<TradeData> queue;
     std::mutex mutex;
     std::condition_variable cv;
 };
 
-// 封装交易信号队列及同步组件
+// Encapsulates trade signal queue and synchronization components
 struct ActionSignalContext {
     SafeQueue<ActionSignal> queue;
     std::mutex mutex;
     std::condition_variable cv;
 };
 
-// 封装系统全局状态（运行/异常标志）
+// Encapsulates global system state (running/exception flags)
 struct SystemState {
     std::atomic<bool> runningFlag{true};
     std::atomic<bool> brokenFlag{false};
@@ -29,7 +29,7 @@ struct SystemState {
     std::condition_variable brokenCV;
 };
 
-// 全局上下文（聚合所有核心同步组件）
+// Global context (aggregates all core synchronization components)
 struct SystemContext {
     MarketDataContext marketData;
     ActionSignalContext actionSignal;

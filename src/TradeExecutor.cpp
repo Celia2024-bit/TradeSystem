@@ -1,6 +1,6 @@
 #include "TradeExecutor.h"
 
-// 简化构造函数实现
+// Simplified constructor implementation
 TradeExecutor::TradeExecutor(SystemContext& ctx)
     : initialFiatBalance_(ctx.initialCash), 
       currentFiatBalance_(ctx.initialCash),
@@ -101,13 +101,13 @@ double TradeExecutor::CalculateProfitLoss(double currentPrice) const
 void TradeExecutor::RunTradeExecutionLoop()
 {
     LOG(Execution) << " RunTradeExecutionLoop started." ;
-    // 替换为上下文内的flag
+    // Replaced with flag inside context
     while (systemState_.runningFlag.load(std::memory_order_acquire) &&
            !systemState_.brokenFlag.load(std::memory_order_acquire))
     {
         ActionSignal receivedActionSignal;
         {
-            // 替换为上下文内的mutex/cv
+            // Replaced with mutex/cv inside context
             std::unique_lock<std::mutex> lock(actionSignalCtx_.mutex); 
             if (!actionSignalCtx_.cv.wait_for(lock, std::chrono::seconds(2),
                                     [this] { return !actionSignalCtx_.queue.empty(); }))
