@@ -83,6 +83,15 @@ public:
           ss << msg.levelName << " :: " << msg.message;
           return ss.str();
         });
+        
+        Logger::getInstance().setFormatter([](const LogMessage& msg) {
+          std::stringstream ss;
+          auto now_c = std::chrono::system_clock::to_time_t(msg.timestamp);
+          ss << std::put_time(std::localtime(&now_c), "%Y-%m-%d %H:%M:%S") << " :: ";
+          ss << msg.levelName << " :: " << msg.message;
+          return ss.str();
+        });
+
         strategyEngine_ = std::make_shared<StrategyEngine>(ctx_);
         tradeExecutor_  = std::make_shared<TradeExecutor>(ctx_);
 
