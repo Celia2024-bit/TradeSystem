@@ -20,7 +20,7 @@ MONITOR_CONFIG = {
     "interval": 1,        # Monitoring sampling frequency (seconds)
     "trend_limit": 2,     # Aggregation points (generate one trend point every X points)
     "result_dir": "build_result",
-    "run_duration": 60
+    "run_duration": 120   # 2 mins
 }
 
 def safe_print(text):
@@ -77,6 +77,7 @@ def main():
     run_script("utilLocal/GenerateStrategy/generate_code.py", interpreter=PYTHON_EXE)
     #run_script("utilLocal/CppLogInjector.py", interpreter="python3")   //exist/ entry
     #run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])  //check-all function , try ,catch 
+
     
     # --- [2. Restore: Build process] ---
     try:
