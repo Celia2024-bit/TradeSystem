@@ -74,10 +74,12 @@ def main():
 
     subprocess.run("rm -rf src/*.cpp.bak", shell=True, check=True)
     subprocess.run("rm -rf src/TradeStrategy/*.cpp.bak", shell=True, check=True)
-    run_script("utilLocal/GenerateStrategy/generate_code.py", interpreter=PYTHON_EXE)
-    #run_script("utilLocal/CppLogInjector.py", interpreter="python3")   //exist/ entry
-    #run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])  //check-all function , try ,catch 
-
+    #  --- config/strategy_config.yaml, change src/StrategyWrapper.cpp/h,  extra_sources.mk 
+    run_script("utilLocal/GenerateStrategy/generate_code.py", interpreter=PYTHON_EXE)  
+    #  --- exist/ entry timestamp ,all functions
+    #run_script("utilLocal/CppLogInjector.py", interpreter="python3") 
+    #  --- check-all function , try ,catch   functionEnhanced.yaml, util/ParameterCheck.h(check)all)
+    #run_script("tools/Add_check_all.py", interpreter="python3", args=["src"])  
     
     # --- [2. Restore: Build process] ---
     try:
