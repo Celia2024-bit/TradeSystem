@@ -423,29 +423,39 @@ endif
 
 ## CI/CD Pipeline
 
-The project uses a **GitLab CI/CD pipeline** to automate the build, test, and deployment processes. The pipeline is defined in the `main.yml` file and consists of two main stages: `docker_build` and `build`. The pipeline is configured to run automatically for branches, merge requests, and web-initiated events.
+The project uses a **GitHub Actions CI/CD pipeline** to automate the build, test, and deployment processes. The pipeline is defined in `main.yml` and consists of two main stages: `docker_build` and `build_and_test`. The pipeline runs automatically on every push and pull request.
 
 ### 1. Docker Build Stage
 
-This stage is responsible for creating a custom Docker image to serve as the build and test environment. It uses the `Dockerfile_v1.2` to ensure a consistent and isolated environment.
+This stage creates a custom Docker image to serve as the build and test environment, using `Dockerfile_v1.2` to ensure a consistent and isolated environment.
 
-* [cite_start]**Dockerfile:** The `Dockerfile_v1.2` is based on `ubuntu:22.04` and installs all necessary dependencies, including `git`, `build-essential` (for C++ compilation), `python3`, `pip3`, and specific Python libraries like `pyyaml`, `jinja2`, and `requests`. [cite: 1, 2]
-* **Image Creation:** The `build_image` job logs into the GitLab Container Registry, builds the Docker image from the Dockerfile, and tags it with both the commit SHA and the "latest" tag.
-* **Push to Registry:** After building, the job pushes the newly created image to the GitLab Container Registry for future use.
+* **Dockerfile:** Based on `ubuntu:22.04`, installs all necessary dependencies including `git`, `build-essential`, `python3`, `pip3`, and Python libraries `pyyaml`, `jinja2`, `requests`, and `psutil` (required by the performance monitor).
+* **Image Creation:** The `build_image` job logs into the GitHub Container Registry, builds the Docker image, and tags it with both the commit SHA and the branch name.
+* **Push to Registry:** The image is pushed to the GitHub Container Registry for use in the next stage.
 
 ### 2. Build and Test Stage
 
-This stage uses the custom Docker image created in the previous stage to run the trading system's automated setup and testing scripts.
+This stage uses the custom Docker image to run the full trading system lifecycle — build, execute, monitor, and validate.
 
-* **Job Image:** The `build_and_test` job uses the `latest` image from the GitLab Container Registry, which was just built.
-* **Execution:** It navigates to the project directory and executes `python RunTradeSystem.py`. [cite_start]This single command handles the entire process, from code generation and building the C++ binary to running the trading system and market data feed. [cite: 3]
-* **Artifacts:** The job is configured to save key output files as artifacts, which are retained for one week. These include:
-  - **build_result/result.txt**: Standard output and trading logs.
-  - **build_result/market_data.csv**: Captured price data from Binance.
-  - **build_result/report_raw_detail.png**: Detailed line charts showing second-by-second resource fluctuations.
-  - **build_result/report_trend_summary.png**: Aggregated trend chart highlighting overall system stability and memory growth patterns.
+* **Execution:** Runs `python RunTradeSystem.py`, which handles code generation, C++ compilation, and orchestrates the trading system, market data feed, and performance monitor as coordinated processes.
 
----
+* **Performance Monitoring:** While the trading system runs, `run_monitor.py` attaches to the process and samples memory, thread count, handle count, and context switches at regular intervals, writing results to `raw_performance.csv` and `trend_performance.csv`.
+
+* **Regression Gate:** After the run completes, `check_regression.py` analyses the trend data and **automatically fails the pipeline** if any metric:
+  - exceeds its absolute threshold (memory > 10MB, threads > 12, handles > 150), or
+  - shows a statistically significant upward slope (linear regression slope > 0.05 per trend-point)
+
+  Thresholds are derived from the system's actual baseline with a 2× buffer. A merge is blocked until the regression is resolved.
+
+* **Artifacts:** The following are saved as pipeline artifacts and retained for one week:
+  - **build_result/result.txt** — trading logs and final P&L
+  - **build_result/market_data.csv** — live Binance price data captured during the run
+  - **build_result/raw_performance.csv** — second-by-second resource samples
+  - **build_result/trend_performance.csv** — aggregated trend data used by the regression gate
+  - **build_result/report_raw_detail.png** — line charts showing per-second resource fluctuations
+  - **build_result/report_trend_summary.png** — trend chart highlighting overall system stability
+
+  Artifacts are uploaded regardless of pipeline result (`if: always()`), so performance data is always available for inspection even when the regression gate triggers a failure.
 
 ## 🛠 Development Tools & Automation
 
