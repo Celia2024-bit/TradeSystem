@@ -93,13 +93,17 @@ jobs:
       #   - any metric shows a statistically upward slope (potential leak)
       #
       # Tune the limits here to match your system's normal operating range.
+      #    baseline  memory   5.2 ~ 5.4 MB   threads  3 ~ 6   handles  74 ~ 76  
+      #    limit = baseline * 2  
+      #    memory   5.4MB × 2  = 10MB,  threads  6 × 2  = 12   handles  76 × 2  = 150 
+      #
       - name: Performance regression check
         run: |
           python3 tools/performance_monitor/check_regression.py \
-            --trend_csv   build_result/trend.csv \
-            --mem_limit        200 \
-            --thread_limit      60 \
-            --handle_limit     500 \
+            --trend_csv        build_result/trend_performance.csv \
+            --mem_limit        10   \
+            --thread_limit     12   \
+            --handle_limit     150  \
             --slope_threshold  0.05
 
       # ── Upload artifacts (always, so you can inspect charts even on failure) 
