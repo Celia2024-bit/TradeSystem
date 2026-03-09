@@ -12,7 +12,6 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  # Job to build and push the custom Docker image
   build_image:
     name: Build Docker Image
     runs-on: ubuntu-latest
@@ -48,17 +47,15 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile_v1.2  # Use the specific Dockerfile version
+          file: ./Dockerfile_v1.2
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           
-  # Build and test job using the custom Docker image
   build_and_test:
     name: Build and Test
     runs-on: ubuntu-latest
     needs: [build_image]
-    # Use the custom Docker image built in the previous job
     container: 
       image: ghcr.io/${{ needs.build_image.outputs.repository }}:${{ github.ref_name }}
       credentials:
@@ -74,8 +71,7 @@ jobs:
           fetch-depth: 0
 
       - name: Configure Git safe directory
-        run: |
-          git config --global --add safe.directory $GITHUB_WORKSPACE
+        run: git config --global --add safe.directory $GITHUB_WORKSPACE
           
       - name: Navigate and check directories
         run: |
@@ -84,13 +80,29 @@ jobs:
           ls -la util/
           ls -la tools/
           
-      - name: Run Python script and compiled binary
+      - name: Run trading system (2 min live run)
         env:
           PYTHONIOENCODING: utf-8
         run: |
           echo "Running trading_system and saving output to result.txt..."
           python3 RunTradeSystem.py
-      
+
+      # ── Regression gate ────────────────────────────────────────────────────
+      # Reads trend CSV produced by RunTradeSystem.py and fails the job if:
+      #   - any metric exceeds its absolute threshold, OR
+      #   - any metric shows a statistically upward slope (potential leak)
+      #
+      # Tune the limits here to match your system's normal operating range.
+      - name: Performance regression check
+        run: |
+          python3 tools/performance_monitor/check_regression.py \
+            --trend_csv   build_result/trend.csv \
+            --mem_limit        200 \
+            --thread_limit      60 \
+            --handle_limit     500 \
+            --slope_threshold  0.05
+
+      # ── Upload artifacts (always, so you can inspect charts even on failure) 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
