@@ -4,6 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # 1. 安装基础环境 (包含 git 才能处理子模块)
 RUN apt-get update && apt-get install -y \
     git \
+    vim \
     net-tools \
     build-essential \
     ca-certificates \
